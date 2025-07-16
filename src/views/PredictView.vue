@@ -79,8 +79,7 @@
                 请选择一个已训练的模型进行预测
               </v-alert>
 
-              <v-btn color="primary" :disabled="!selectedModel || !canStartPrediction" @click="startPrediction"
-                :loading="isPredicting">
+              <v-btn color="primary" :disabled="!selectedModel" @click="startPrediction" :loading="isPredicting">
                 开始预测
               </v-btn>
             </v-col>
@@ -107,7 +106,7 @@
           </v-card>
 
           <!-- 预测结果图表 -->
-          <v-card variant="outlined" class="mb-6">
+          <v-card class="mb-6">
             <v-card-title class="text-h6 d-flex justify-space-between align-center">
               时间序列预测对比
               <v-btn v-if="inputDataSource === 'realtime'" @click="toggleRealtime"

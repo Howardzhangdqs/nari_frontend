@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
-import { ref, watch, onMounted } from "vue";
+import { ref, watch, onMounted, computed } from "vue"; // 添加 computed
 import router from "./router";
+import { useDisplay } from "vuetify"; // 添加响应式显示工具
+
+const { mdAndUp } = useDisplay(); // 获取响应式屏幕尺寸信息
 
 const getPageFromRoute = (route) => {
-  // 取路由name，若无则默认home
   return route.name || "home";
 };
 
@@ -32,12 +34,29 @@ watch(
     }
   }
 );
+
+// 修改为响应式控制，默认在大屏上展开
+const section_opened = ref(mdAndUp.value);
+
+// 添加悬浮按钮显示状态
+const showFloatButton = computed(() => !section_opened.value);
+
+// 响应屏幕尺寸变化
+watch(mdAndUp, (newValue) => {
+  section_opened.value = newValue;
+});
+
+// 点击悬浮按钮打开抽屉
+const openDrawer = () => {
+  section_opened.value = true;
+};
 </script>
 
 <template>
-  <v-container>
+  <v-container class="main-container">
     <v-layout>
-      <v-navigation-drawer style="user-select: none;">
+      <v-navigation-drawer style="user-select: none;" v-model="section_opened" :permanent="mdAndUp"
+        :temporary="!mdAndUp">
         <v-list>
           <v-tooltip text="平台Logo及名称">
             <template v-slot:activator="{ props }">
@@ -135,7 +154,23 @@ watch(
         </v-container>
       </v-main>
     </v-layout>
+
+    <v-fab-transition>
+      <v-btn v-show="showFloatButton" class="float-button" color="primary" fab @click="openDrawer" icon="mdi-menu">
+      </v-btn>
+    </v-fab-transition>
   </v-container>
 </template>
+<style scoped>
+.main-container {
+  position: relative;
+}
 
-<style scoped></style>
+.float-button {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 999;
+  transition: all 0.3s ease;
+}
+</style>
