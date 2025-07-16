@@ -28,8 +28,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { Line } from 'vue-chartjs';
+import { computed, ref } from "vue";
+import { Line } from "vue-chartjs";
 
 const props = defineProps<{
   model: string;
@@ -44,17 +44,23 @@ const time_number_2_string = (time: number) => {
   const hours = Math.floor(time / 3600);
   const minutes = Math.floor((time % 3600) / 60);
   const seconds = time % 60;
+
+  const result = [];
+
   if (hours > 0) {
-    return `${hours} 小时 ${minutes} 分 ${seconds.toPrecision(2)} 秒`;
+    result.push(`${hours} 小时`);
   }
   if (minutes > 0) {
-    return `${minutes} 分 ${seconds.toFixed(2)} 秒`;
+    result.push(`${minutes} 分`);
   }
-  return `${seconds.toFixed(2)} 秒`;
-}
+  if (seconds > 0 || result.length === 0) {
+    result.push(`${seconds.toFixed(0)} 秒`);
+  }
+  return result.join(" ");
+};
 
 const time_string = computed(() => {
-  if (!props.time) return '未知';
+  if (!props.time) return "未知";
   return time_number_2_string(props.time);
 });
 
@@ -66,6 +72,10 @@ for (let i = 0; i < 99; i++) {
   value2.push(value2[i] * (1.1 - Math.random() * 0.5 + i * 0.001));
 }
 
+for (let i = 0; i < 100; i++) {
+  value1[i] = value1[i] * (1 + Math.random() * 0.2);
+  value2[i] = value2[i] * (2 + Math.random() * 0.1);
+}
 
 import {
   Chart as ChartJS,
@@ -76,35 +86,37 @@ import {
   Title,
   Tooltip,
   Legend,
-} from 'chart.js';
+} from "chart.js";
 
-ChartJS.register(Title, Tooltip, Legend, PointElement, LineElement, CategoryScale, LinearScale)
-const chartData = ref({
-  labels: value1.map((_, index) => `Step ${index + 1}`),
+ChartJS.register(Title, Tooltip, Legend, PointElement, LineElement, CategoryScale, LinearScale);
+
+const chartData = computed(() => ({
+  labels: value1.slice(0, props.progress).map((_, index) => `Step ${index + 1}`),
   datasets: [{
-    data: value1.map(v => v * (1 + Math.random() * 0.2)),
-    borderColor: '#fff',
-    backgroundColor: '#fff',
-    pointBackgroundColor: '#fff',
-    pointBorderColor: '#fff',
+    data: value1.slice(0, props.progress),
+    borderColor: "#fff",
+    backgroundColor: "#fff",
+    pointBackgroundColor: "#fff",
+    pointBorderColor: "#fff",
     borderWidth: 2,
-    label: 'Train Loss',
+    label: "Train Loss",
   }, {
-    data: value2.map(v => v * (2 + Math.random() * 0.1)),
-    borderColor: '#ddd523',
-    backgroundColor: '#ddd523',
-    pointBackgroundColor: '#ddd523',
-    pointBorderColor: '#ddd523',
+    data: value2.slice(0, props.progress),
+    borderColor: "#ddd523",
+    backgroundColor: "#ddd523",
+    pointBackgroundColor: "#ddd523",
+    pointBorderColor: "#ddd523",
     borderWidth: 2,
-    label: 'Test Loss',
+    label: "Test Loss",
   }]
-});
+}));
+
 const chartOptions = ref({
   responsive: true,
   plugins: {
     legend: {
       labels: {
-        color: '#fff'
+        color: "#fff"
       }
     }
   },
@@ -118,7 +130,7 @@ const chartOptions = ref({
       grid: { display: false }
     }
   },
-  type: 'line',
+  type: "line",
   elements: {
     point: {
       radius: 0,

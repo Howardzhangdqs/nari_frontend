@@ -31,8 +31,8 @@
 </template>
 
 <script lang="ts" setup>
-import { Bar } from 'vue-chartjs';
-import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale } from 'chart.js';
+import { Bar } from "vue-chartjs";
+import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale } from "chart.js";
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale);
 
@@ -74,7 +74,58 @@ function createHistogramData(data: number[], bins: number = 20): { labels: strin
 }
 
 // 为几个特征生成图表数据
-const chartData = [];
+interface HistogramData {
+  labels: string[];
+  values: number[];
+}
+
+interface ChartDataset {
+  label: string;
+  data: number[];
+  backgroundColor: string;
+  borderColor: string;
+  borderWidth: number;
+}
+
+interface ChartOptions {
+  responsive: boolean;
+  plugins: {
+    title: {
+      display: boolean;
+      text: string;
+    };
+    legend: {
+      display: boolean;
+    };
+  };
+  scales: {
+    x: {
+      title: {
+        display: boolean;
+        text: string;
+      };
+    };
+    y: {
+      title: {
+        display: boolean;
+        text: string;
+      };
+      ticks: {
+        stepSize: number;
+      };
+    };
+  };
+}
+
+interface ChartDataItem {
+  data: {
+    labels: string[];
+    datasets: ChartDataset[];
+  };
+  options: ChartOptions;
+}
+
+const chartData: ChartDataItem[] = [];
 const selectedFeatures = [1, 15, 32, 67, 89]; // 选择几个特征来展示
 
 for (let i = 0; i < selectedFeatures.length; i++) {
@@ -90,8 +141,8 @@ for (let i = 0; i < selectedFeatures.length; i++) {
       datasets: [{
         label: `特征 ${featureIndex} 分布`,
         data: histData.values,
-        backgroundColor: `#0365af`,
-        borderColor: `#0365af`,
+        backgroundColor: "#0365af",
+        borderColor: "#0365af",
         borderWidth: 1
       }]
     },
@@ -110,13 +161,13 @@ for (let i = 0; i < selectedFeatures.length; i++) {
         x: {
           title: {
             display: true,
-            text: '数值区间'
+            text: "数值区间"
           }
         },
         y: {
           title: {
             display: true,
-            text: '频次'
+            text: "频次"
           },
           ticks: {
             stepSize: 1
@@ -132,11 +183,11 @@ const headers: {
   align?: "start" | "end" | "center";
   key: string;
 }[] = [
-    { title: '数据 ID', align: 'start', key: 'id' },
+    { title: "数据 ID", align: "start", key: "id" },
   ];
 
 for (let i = 1; i <= num_features; i++) {
-  headers.push({ title: `特征 ${i}`, key: `feature_${i}`, align: 'start' });
+  headers.push({ title: `特征 ${i}`, key: `feature_${i}`, align: "start" });
 }
 
 const table_data: {

@@ -1,22 +1,22 @@
-import './assets/main.css'
-import '@mdi/font/css/materialdesignicons.min.css'
-import '@fortawesome/fontawesome-free/css/all.min.css'
+import "./assets/main.css";
+import "@mdi/font/css/materialdesignicons.min.css";
+import "@fortawesome/fontawesome-free/css/all.min.css";
 
-import { createApp } from 'vue'
-import App from './App.vue'
-import router from './router'
+import { createApp } from "vue";
+import App from "./App.vue";
+import router from "./router";
 
-import 'vuetify/styles'
-import { createVuetify } from 'vuetify'
-import * as components from 'vuetify/components'
-import * as directives from 'vuetify/directives'
+import "vuetify/styles";
+import { createVuetify } from "vuetify";
+import * as components from "vuetify/components";
+import * as directives from "vuetify/directives";
 
-import { aliases, fa } from 'vuetify/iconsets/fa';
-import { mdi } from 'vuetify/iconsets/mdi';
+import { aliases, fa } from "vuetify/iconsets/fa";
+import { mdi } from "vuetify/iconsets/mdi";
 
-const app = createApp(App)
+const app = createApp(App);
 
-app.use(router)
+app.use(router);
 
 const vuetify = createVuetify({
   components,
@@ -28,6 +28,6 @@ const vuetify = createVuetify({
   //     fa, mdi
   //   },
   // },
-})
+});
 
-app.use(vuetify).mount('#app')
+app.use(vuetify).mount("#app");

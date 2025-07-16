@@ -33,10 +33,10 @@
 </template>
 
 <script>
-import * as echarts from 'echarts';
+import * as echarts from "echarts";
 
 export default {
-  name: 'PredictionResults',
+  name: "PredictionResults",
   mounted() {
     this.initTimeSeriesChart();
   },
@@ -45,30 +45,30 @@ export default {
       const chart = echarts.init(this.$refs.timeSeriesChart);
       const option = {
         title: {
-          text: 'Time Series Comparison',
-          left: 'center'
+          text: "Time Series Comparison",
+          left: "center"
         },
         tooltip: {
-          trigger: 'axis'
+          trigger: "axis"
         },
         xAxis: {
-          type: 'category',
+          type: "category",
           boundaryGap: false,
-          data: ['Jan', 'Feb', 'Mar', 'Apr']
+          data: ["Jan", "Feb", "Mar", "Apr"]
         },
         yAxis: {
-          type: 'value'
+          type: "value"
         },
         series: [
           {
-            name: 'Prediction',
-            type: 'line',
+            name: "Prediction",
+            type: "line",
             data: [1, 2, 3, 4],
             smooth: true
           },
           {
-            name: 'Actual',
-            type: 'line',
+            name: "Actual",
+            type: "line",
             data: [2, 1, 4, 3],
             smooth: true
           }
@@ -77,10 +77,10 @@ export default {
       chart.setOption(option);
     },
     exportResults() {
-      alert('Export Prediction Results');
+      alert("Export Prediction Results");
     }
   }
-}
+};
 </script>
 
 <style scoped>

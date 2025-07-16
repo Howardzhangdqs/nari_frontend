@@ -10,18 +10,18 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { ref } from "vue";
 
 const messages = [
   {
     id: 1,
-    color: 'info',
-    icon: 'mdi-information',
+    color: "info",
+    icon: "mdi-information",
   },
   {
     id: 2,
-    color: 'error',
-    icon: 'mdi-alert-circle',
+    color: "error",
+    icon: "mdi-alert-circle",
   },
 ];
 

@@ -15,5 +15,5 @@
 </template>
 
 <script lang="ts" setup>
-import SectionOne from './TrainView/SectionOne.vue';
+import SectionOne from "./TrainView/SectionOne.vue";
 </script>
