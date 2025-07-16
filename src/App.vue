@@ -64,7 +64,7 @@ watch(
                 </v-list-item>
               </template>
             </v-tooltip>
-            <v-tooltip text="特征选择、处理等">
+            <!-- <v-tooltip text="特征选择、处理等">
               <template v-slot:activator="{ props }">
                 <v-list-item title="特征工程" value="feature" rounded="xl" v-bind="props">
                   <template #prepend>
@@ -74,7 +74,7 @@ watch(
                   </template>
                 </v-list-item>
               </template>
-            </v-tooltip>
+            </v-tooltip> -->
             <v-tooltip text="上传原始数据文件">
               <template v-slot:activator="{ props }">
                 <v-list-item title="数据上传" value="data" rounded="xl" v-bind="props">
