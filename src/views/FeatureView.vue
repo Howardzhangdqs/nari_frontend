@@ -1,7 +1,6 @@
 <template>
   <v-stepper :items="['特征工程', 'Step 2', 'Step 3']">
     <template v-slot:[`item.1`]>
-      <SectionOne />
     </template>
 
     <template v-slot:[`item.2`]>
@@ -15,5 +14,4 @@
 </template>
 
 <script lang="ts" setup>
-import SectionOne from "./TrainView/SectionOne.vue";
 </script>

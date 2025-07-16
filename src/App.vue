@@ -1,26 +1,37 @@
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
-import { ref, watch } from "vue";
+import { ref, watch, onMounted } from "vue";
 import router from "./router";
 
-const page = location.hash.split("#")[1].split("/")[1];
+const getPageFromRoute = (route) => {
+  // 取路由name，若无则默认home
+  return route.name || "home";
+};
 
-console.log(page);
-
-const section_selected = ref([page || "home"]);
+const section_selected = ref([getPageFromRoute(router.currentRoute.value)]);
 let section_selected_past = section_selected.value[0];
 
+// 监听左侧list变化，切换路由
 watch(section_selected, () => {
-  if (section_selected.value.length == 0) {
+  if (section_selected.value.length === 0) {
     section_selected.value = [section_selected_past];
   } else {
     section_selected_past = section_selected.value[0];
+    if (router.currentRoute.value.name !== section_selected.value[0]) {
+      router.push({ name: section_selected.value[0] });
+    }
   }
-
-  router.push({
-    name: section_selected.value[0],
-  });
 });
+
+// 监听路由变化，切换左侧list
+watch(
+  () => router.currentRoute.value.name,
+  (newName) => {
+    if (newName && section_selected.value[0] !== newName) {
+      section_selected.value = [newName];
+    }
+  }
+);
 </script>
 
 <template>
@@ -114,7 +125,12 @@ watch(section_selected, () => {
 
       <v-main>
         <v-container>
-          <router-view>
+          <router-view v-slot="{ Component }">
+            <transition>
+              <keep-alive>
+                <component :is="Component" />
+              </keep-alive>
+            </transition>
           </router-view>
         </v-container>
       </v-main>

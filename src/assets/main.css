@@ -1,3 +1,75 @@
 #app {
   height: 100vh;
 }
+
+.mbm-1 {
+  margin-bottom: -10px;
+}
+
+.mbm-2 {
+  margin-bottom: -20px;
+}
+
+.mbm-3 {
+  margin-bottom: -30px;
+}
+
+.mbm-4 {
+  margin-bottom: -40px;
+}
+
+.mbm-5 {
+  margin-bottom: -50px;
+}
+
+.mbm-6 {
+  margin-bottom: -60px;
+}
+
+.child-mbm-1>* {
+  margin-bottom: -10px;
+}
+
+.child-mbm-2>* {
+  margin-bottom: -20px;
+}
+
+.mtm-1 {
+  margin-top: -10px;
+}
+
+.mtm-2 {
+  margin-top: -20px;
+}
+
+.mtm-3 {
+  margin-top: -30px;
+}
+
+.mtm-4 {
+  margin-top: -40px;
+}
+
+.mtm-5 {
+  margin-top: -50px;
+}
+
+.mtm-6 {
+  margin-top: -60px;
+}
+
+.child-mtm-1>* {
+  margin-top: -10px;
+}
+
+.child-mtm-2>* {
+  margin-top: -20px;
+}
+
+.text-bold {
+  font-weight: bold !important;
+}
+
+.gap-2 {
+  gap: 10px;
+}
