@@ -58,14 +58,14 @@ const openDrawer = () => {
       <v-navigation-drawer style="user-select: none;" v-model="section_opened" :permanent="mdAndUp"
         :temporary="!mdAndUp">
         <v-list>
-          <v-tooltip text="平台Logo及名称">
+          <!-- <v-tooltip text="平台Logo及名称">
             <template v-slot:activator="{ props }">
               <v-list-item v-bind="props">
                 <img src="/nari-logo.png" style="width: 100%" />
                 XXXX预测平台
               </v-list-item>
             </template>
-          </v-tooltip>
+          </v-tooltip> -->
         </v-list>
 
         <v-divider></v-divider>
