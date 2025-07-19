@@ -1,5 +1,10 @@
 import { createRouter, createWebHashHistory } from "vue-router";
 import HomeView from "../views/HomeView.vue";
+import CompareView from "../views/CompareView.vue";
+import FeatureView from "../views/FeatureView.vue";
+import DataView from "../views/DataView.vue";
+import TrainView from "../views/TrainView.vue";
+import PredictView from "../views/PredictView.vue";
 
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),
@@ -12,27 +17,27 @@ const router = createRouter({
     {
       path: "/compare",
       name: "compare",
-      component: () => import("../views/CompareView.vue"),
+      component: CompareView,
     },
     {
       path: "/feature",
       name: "feature",
-      component: () => import("../views/FeatureView.vue"),
+      component: FeatureView,
     },
     {
       path: "/data",
       name: "data",
-      component: () => import("../views/DataView.vue"),
+      component: DataView,
     },
     {
       path: "/train",
       name: "train",
-      component: () => import("../views/TrainView.vue"),
+      component: TrainView,
     },
     {
       path: "/predict",
       name: "predict",
-      component: () => import("../views/PredictView.vue"),
+      component: PredictView,
     },
   ],
 });

@@ -224,7 +224,7 @@
                 </v-card-title>
 
                 <v-row>
-                  <v-col cols="12" md="4">
+                  <v-col cols="12" md="4" xl="3" style="display: flex; align-items: center; justify-content: center;">
                     <div class="text-center">
                       <div class="text-h2 font-weight-bold" :class="getQualityScoreColor(overallQuality)">
                         {{ overallQuality.toFixed(1) }}
@@ -234,18 +234,20 @@
                     </div>
                   </v-col>
 
-                  <v-col cols="12" md="8">
-                    <v-expansion-panels variant="accordion">
-                      <v-expansion-panel v-for="assessment in qualityAssessments" :key="assessment.metric"
-                        :title="assessment.title">
-                        <v-expansion-panel-text>
-                          <div class="text-body-1 mb-3">{{ assessment.description }}</div>
-                          <v-alert :type="assessment.level" variant="outlined" class="mb-2">
-                            <strong>{{ assessment.title }}：</strong>{{ assessment.conclusion }}
-                          </v-alert>
-                        </v-expansion-panel-text>
-                      </v-expansion-panel>
-                    </v-expansion-panels>
+                  <v-col cols="12" md="8" xl="9">
+                    <v-row class="gutters-2">
+                      <v-col cols="12" lg="6" xl="4" v-for="assessment in qualityAssessments" :key="assessment.metric">
+                        <v-card class="mb-3 pa-3">
+                          <v-card-title class="text-subtitle-1 pa-0 mb-2">{{ assessment.title }}</v-card-title>
+                          <v-card-text>
+                            <div class="text-body-1 mb-2">{{ assessment.description }}</div>
+                            <v-alert :type="assessment.level" variant="outlined" class="mb-2">
+                              <strong>{{ assessment.title }}：</strong>{{ assessment.conclusion }}
+                            </v-alert>
+                          </v-card-text>
+                        </v-card>
+                      </v-col>
+                    </v-row>
                   </v-col>
                 </v-row>
               </v-card>
@@ -306,6 +308,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from "vue";
 import * as echarts from "echarts";
+import { registChart } from "@/resize_charts";
 
 interface TrainedModel {
   id: string;
@@ -602,6 +605,8 @@ const initializeCharts = () => {
         }
       ]
     });
+
+    registChart(chart);
   }
 };
 
@@ -711,6 +716,8 @@ const initializeAnalysisCharts = () => {
         top: 60
       }
     });
+
+    registChart(chart);
   }
 
   // 残差散点图
@@ -793,6 +800,8 @@ const initializeAnalysisCharts = () => {
         }
       ]
     });
+
+    registChart(chart);
   }
 };
 

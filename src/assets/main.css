@@ -1,6 +1,8 @@
-#app {
+@import url("./transition.css");
+
+/* #app {
   height: 100vh;
-}
+} */
 
 .mbm-1 {
   margin-bottom: -10px;
@@ -84,4 +86,20 @@
 
 .select-none {
   user-select: none;
+}
+
+.main-container {
+  margin: 10px;
+}
+
+.gutters-1>[class*=v-col-] {
+  padding: 4px;
+}
+
+.gutters-2>[class*=v-col-] {
+  padding: 8px;
+}
+
+.gutters-3>[class*=v-col-] {
+  padding: 12px;
 }

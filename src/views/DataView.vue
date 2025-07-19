@@ -43,26 +43,30 @@
                   <v-btn v-if="dbTables.length > 1" @click="removeTable(index)" size="small" color="error"
                     variant="text" icon="mdi-delete"></v-btn>
                 </div>
-                <v-row class="child-mbm-1">
-                  <v-col cols="12" md="4">
+                <v-row class="">
+                  <v-col cols="12" md="3">
                     <v-text-field v-model="table.schema" label="数据库模式名" variant="outlined"
                       density="compact"></v-text-field>
                   </v-col>
-                  <v-col cols="12" md="4">
+                  <v-col cols="12" md="3">
                     <v-text-field v-model="table.tableName" label="表名" variant="outlined"
                       density="compact"></v-text-field>
                   </v-col>
-                  <v-col cols="12" md="4">
-                    <v-text-field v-model="table.primaryKey" label="主键" variant="outlined"
-                      density="compact"></v-text-field>
+                  <v-col cols="12" md="3">
+                    <v-combobox v-model="table.primaryKeys" label="主键名" multiple chips closable-chips variant="outlined"
+                      density="compact" hint="支持联合主键，输入后按回车添加" persistent-hint></v-combobox>
+                  </v-col>
+                  <v-col cols="12" md="3">
+                    <v-text-field v-model="table.primaryKeyValueRange" label="主键取值范围" variant="outlined"
+                      density="compact" hint="例如: 1-1000 或 A001-A999"></v-text-field>
                   </v-col>
                 </v-row>
 
                 <!-- 列名映射配置 -->
                 <v-expansion-panels class="mt-2">
-                  <v-expansion-panel title="列名映射配置">
+                  <v-expansion-panel title="数据列配置">
                     <v-expansion-panel-text>
-                      <v-row>
+                      <v-row class="child-mbm-3">
                         <v-col cols="12" md="6">
                           <v-text-field v-model="table.timeColumnName" label="时间索引列名" variant="outlined"
                             density="compact" hint="将映射为标准的 'timestamp' 列"></v-text-field>
@@ -70,6 +74,13 @@
                         <v-col cols="12" md="6">
                           <v-text-field v-model="table.pointColumnName" label="基准点号列名" variant="outlined"
                             density="compact" hint="将映射为标准的 'point_id' 列"></v-text-field>
+                        </v-col>
+                      </v-row>
+                      <v-row class="child-mbm-1">
+                        <v-col cols="12">
+                          <v-combobox v-model="table.dataColumns" label="数据所在列的列名" multiple chips closable-chips
+                            variant="outlined" density="compact" hint="选择或输入需要提取数据的列名，支持多个列"
+                            persistent-hint></v-combobox>
                         </v-col>
                       </v-row>
                     </v-expansion-panel-text>
@@ -322,18 +333,22 @@ const dbConfig = ref({
 interface DbTable {
   schema: string;
   tableName: string;
-  primaryKey: string;
+  primaryKeys: string[]; // 支持联合主键
+  primaryKeyValueRange: string; // 主键取值范围
   timeColumnName: string;
   pointColumnName: string;
+  dataColumns: string[]; // 数据所在列的列名
 }
 
 const dbTables = ref<DbTable[]>([
   {
     schema: "",
     tableName: "",
-    primaryKey: "",
+    primaryKeys: [],
+    primaryKeyValueRange: "",
     timeColumnName: "",
-    pointColumnName: ""
+    pointColumnName: "",
+    dataColumns: []
   }
 ]);
 
@@ -368,9 +383,11 @@ const addTable = () => {
   dbTables.value.push({
     schema: "",
     tableName: "",
-    primaryKey: "",
+    primaryKeys: [],
+    primaryKeyValueRange: "",
     timeColumnName: "",
-    pointColumnName: ""
+    pointColumnName: "",
+    dataColumns: []
   });
 };
 

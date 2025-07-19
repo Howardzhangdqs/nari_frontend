@@ -11,66 +11,74 @@
 
         <!-- 手动输入参数 -->
         <div v-if="paramInputMethod === 'manual'">
-          <v-card variant="outlined" class="pa-4 mb-4">
-            <v-card-title class="text-h6 pa-0 mb-3">基础训练参数</v-card-title>
-            <v-row class="child-mbm-2">
-              <v-col cols="12" md="4">
-                <v-text-field v-model="trainParams.seq_len" label="序列长度 (Seq_Len)" type="number" variant="outlined"
-                  density="compact" hint="输入序列的长度"></v-text-field>
-              </v-col>
-              <v-col cols="12" md="4">
-                <v-text-field v-model="trainParams.label_len" label="标签长度 (Label_Len)" type="number" variant="outlined"
-                  density="compact" hint="标签序列的长度"></v-text-field>
-              </v-col>
-              <v-col cols="12" md="4">
-                <v-text-field v-model="trainParams.pred_len" label="预测长度 (Pred_Len)" type="number" variant="outlined"
-                  density="compact" hint="预测序列的长度"></v-text-field>
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-text-field v-model="trainParams.batch_size" label="批次大小 (Batch Size)" type="number"
-                  variant="outlined" density="compact"></v-text-field>
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-text-field v-model="trainParams.epochs" label="训练轮数 (Epochs)" type="number" variant="outlined"
-                  density="compact"></v-text-field>
-              </v-col>
-            </v-row>
-          </v-card>
+          <v-row>
+            <v-col cols="12" md="12" lg="6" xl="4" sm="6">
+              <v-card variant="outlined" class="pa-4 mb-4">
+                <v-card-title class="text-h6 pa-0 mb-3">基础训练参数</v-card-title>
+                <v-row class="child-mbm-2">
+                  <v-col cols="12" md="4">
+                    <v-text-field v-model="trainParams.seq_len" label="序列长度 (Seq_Len)" type="number" variant="outlined"
+                      density="compact" hint="输入序列的长度"></v-text-field>
+                  </v-col>
+                  <v-col cols="12" md="4">
+                    <v-text-field v-model="trainParams.label_len" label="标签长度 (Label_Len)" type="number"
+                      variant="outlined" density="compact" hint="标签序列的长度"></v-text-field>
+                  </v-col>
+                  <v-col cols="12" md="4">
+                    <v-text-field v-model="trainParams.pred_len" label="预测长度 (Pred_Len)" type="number"
+                      variant="outlined" density="compact" hint="预测序列的长度"></v-text-field>
+                  </v-col>
+                  <v-col cols="12" md="6">
+                    <v-text-field v-model="trainParams.batch_size" label="批次大小 (Batch Size)" type="number"
+                      variant="outlined" density="compact"></v-text-field>
+                  </v-col>
+                  <v-col cols="12" md="6">
+                    <v-text-field v-model="trainParams.epochs" label="训练轮数 (Epochs)" type="number" variant="outlined"
+                      density="compact"></v-text-field>
+                  </v-col>
+                </v-row>
+              </v-card>
+            </v-col>
 
-          <v-card variant="outlined" class="pa-4 mb-4">
-            <v-card-title class="text-h6 pa-0 mb-3">超参数优化范围</v-card-title>
-            <v-row class="child-mbm-2">
-              <v-col cols="12" md="6">
-                <v-text-field v-model="hyperParams.learning_rate_min" label="学习率最小值" type="number" step="0.0001"
-                  variant="outlined" density="compact"></v-text-field>
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-text-field v-model="hyperParams.learning_rate_max" label="学习率最大值" type="number" step="0.0001"
-                  variant="outlined" density="compact"></v-text-field>
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-text-field v-model="hyperParams.dropout_min" label="Dropout最小值" type="number" step="0.01"
-                  variant="outlined" density="compact"></v-text-field>
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-text-field v-model="hyperParams.dropout_max" label="Dropout最大值" type="number" step="0.01"
-                  variant="outlined" density="compact"></v-text-field>
-              </v-col>
-            </v-row>
-          </v-card>
+            <v-col cols="12" md="12" lg="6" xl="4" sm="6">
+              <v-card variant="outlined" class="pa-4 mb-4">
+                <v-card-title class="text-h6 pa-0 mb-3">超参数优化范围</v-card-title>
+                <v-row class="child-mbm-2">
+                  <v-col cols="12" md="6">
+                    <v-text-field v-model="hyperParams.learning_rate_min" label="学习率最小值" type="number" step="0.0001"
+                      variant="outlined" density="compact"></v-text-field>
+                  </v-col>
+                  <v-col cols="12" md="6">
+                    <v-text-field v-model="hyperParams.learning_rate_max" label="学习率最大值" type="number" step="0.0001"
+                      variant="outlined" density="compact"></v-text-field>
+                  </v-col>
+                  <v-col cols="12" md="6">
+                    <v-text-field v-model="hyperParams.dropout_min" label="Dropout最小值" type="number" step="0.01"
+                      variant="outlined" density="compact"></v-text-field>
+                  </v-col>
+                  <v-col cols="12" md="6">
+                    <v-text-field v-model="hyperParams.dropout_max" label="Dropout最大值" type="number" step="0.01"
+                      variant="outlined" density="compact"></v-text-field>
+                  </v-col>
+                </v-row>
+              </v-card>
+            </v-col>
 
-          <v-card variant="outlined" class="pa-4">
-            <v-card-title class="text-h6 pa-0 mb-3">归一化参数</v-card-title>
-            <v-row style="align-items: center; margin-bottom: -40px;">
-              <v-col cols="12" md="6">
-                <v-select v-model="normalizationParams.method" :items="normalizationMethods" label="归一化方法"
-                  variant="outlined" density="compact"></v-select>
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-switch v-model="normalizationParams.inverse" label="支持反归一化" color="primary"></v-switch>
-              </v-col>
-            </v-row>
-          </v-card>
+            <v-col cols="12" md="12" lg="6" xl="4" sm="6">
+              <v-card variant="outlined" class="pa-4">
+                <v-card-title class="text-h6 pa-0 mb-3">归一化参数</v-card-title>
+                <v-row style="align-items: center; margin-bottom: -40px;">
+                  <v-col cols="12" md="6">
+                    <v-select v-model="normalizationParams.method" :items="normalizationMethods" label="归一化方法"
+                      variant="outlined" density="compact"></v-select>
+                  </v-col>
+                  <v-col cols="12" md="6">
+                    <v-switch v-model="normalizationParams.inverse" label="支持反归一化" color="primary"></v-switch>
+                  </v-col>
+                </v-row>
+              </v-card>
+            </v-col>
+          </v-row>
         </div>
 
         <!-- 文件导入参数 -->
@@ -211,10 +219,12 @@
           </v-card>
 
           <!-- 每个选中的模型训练组件 -->
-          <div v-for="(model, idx) in selectedAiModels" :key="model.id">
-            <ModelTrainer :model="model" :train-params="trainParams" @training-completed="onModelCompleted"
-              :ref="el => modelTrainerRefs[idx] = el" />
-          </div>
+          <v-row>
+            <v-col col="12" md="12" lg="6" xl="4" xxl="3" v-for="(model, idx) in selectedAiModels" :key="model.id">
+              <ModelTrainer :model="model" :train-params="trainParams" @training-completed="onModelCompleted"
+                :ref="el => modelTrainerRefs[idx] = el" />
+            </v-col>
+          </v-row>
 
           <!-- 训练总结（当有模型完成训练时显示） -->
           <TrainingSummary v-if="completedModels > 0" :model-results="modelResults" />

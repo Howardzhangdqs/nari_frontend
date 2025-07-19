@@ -2,7 +2,7 @@
   <v-card class="mt-6 mx-auto overflow-visible" max-width="400">
     <v-sheet class="v-sheet--offset mx-auto" :color="props.finished ? 'success' : 'primary'" elevation="8"
       max-width="calc(100% - 16px)" rounded="lg" style="padding: 0 10px 10px 10px">
-      <Line :data="chartData" :options="chartOptions" />
+      <div ref="chartContainer" class="chart-container-width-100" :style="{ height: '100px', width: '100%' }"></div>
     </v-sheet>
 
     <v-card-text class="pt-0">
@@ -19,7 +19,7 @@
         <span class="text-caption text-grey" style="line-height: 15px;">
           训练用时 {{ time_string }}
           <span v-if="props.progress && props.time && !props.finished">
-            <br />预计还需 {{ time_number_2_string(props.time / props.progress * 100) }}</span>
+            <br />预计还需 {{ time_number_2_string(props.time / props.progress * (100 - props.progress)) }}</span>
         </span>
       </div>
       <v-progress-linear :model-value="props.progress" v-if="props.progress && !props.finished"></v-progress-linear>
@@ -28,8 +28,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import { Line } from "vue-chartjs";
+import { computed, ref, onMounted, watch, onUnmounted } from "vue";
+import * as echarts from "echarts";
 
 const props = defineProps<{
   model: string;
@@ -77,69 +77,138 @@ for (let i = 0; i < 100; i++) {
   value2[i] = value2[i] * (2 + Math.random() * 0.1);
 }
 
+import { use } from "echarts/core";
+import { LineChart } from "echarts/charts";
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
+  TitleComponent,
+  TooltipComponent,
+  LegendComponent,
+  GridComponent
+} from "echarts/components";
+import { CanvasRenderer } from "echarts/renderers";
+import { registChart } from "@/resize_charts";
 
-ChartJS.register(Title, Tooltip, Legend, PointElement, LineElement, CategoryScale, LinearScale);
+use([TitleComponent, TooltipComponent, LegendComponent, GridComponent, LineChart, CanvasRenderer]);
 
-const chartData = computed(() => ({
-  labels: value1.slice(0, props.progress).map((_, index) => `Step ${index + 1}`),
-  datasets: [{
-    data: value1.slice(0, props.progress),
-    borderColor: "#fff",
-    backgroundColor: "#fff",
-    pointBackgroundColor: "#fff",
-    pointBorderColor: "#fff",
-    borderWidth: 2,
-    label: "Train Loss",
-  }, {
-    data: value2.slice(0, props.progress),
-    borderColor: "#ddd523",
-    backgroundColor: "#ddd523",
-    pointBackgroundColor: "#ddd523",
-    pointBorderColor: "#ddd523",
-    borderWidth: 2,
-    label: "Test Loss",
-  }]
-}));
+const chartContainer = ref<HTMLDivElement>();
+let chartInstance: echarts.ECharts | null = null;
 
-const chartOptions = ref({
-  responsive: true,
-  plugins: {
-    legend: {
-      labels: {
-        color: "#fff"
+const initChart = () => {
+  if (chartContainer.value) {
+    chartInstance = echarts.init(chartContainer.value);
+    updateChart();
+  }
+};
+
+const updateChart = () => {
+  if (!chartInstance) return;
+
+  const option = {
+    xAxis: {
+      type: "category",
+      data: value1.slice(0, props.progress).map((_, index) => `Step ${index + 1}`),
+      show: false
+    },
+    yAxis: {
+      type: "value",
+      show: false
+    },
+    series: [
+      {
+        name: "Train Loss",
+        type: "line",
+        data: value1.slice(0, props.progress),
+        smooth: true,
+        lineStyle: {
+          color: "#fff",
+          width: 2
+        },
+        itemStyle: {
+          color: "#fff"
+        },
+        symbol: "none"
+      },
+      {
+        name: "Test Loss",
+        type: "line",
+        data: value2.slice(0, props.progress),
+        smooth: true,
+        lineStyle: {
+          color: "#ddd523",
+          width: 2
+        },
+        itemStyle: {
+          color: "#ddd523"
+        },
+        symbol: "none"
+      }
+    ],
+    grid: {
+      left: 0,
+      right: 0,
+      top: 0,
+      bottom: 2
+    },
+    tooltip: {
+      trigger: "axis",
+      axisPointer: {
+        type: "line"
+      },
+      formatter: function (
+        params: Array<{
+          value: number | string;
+          seriesName: string;
+          color: string;
+          axisValue: string;
+        }>
+      ) {
+        // params is an array of series data at the hovered point
+        const result = params.map((item) => {
+          // Format value to 4 decimal places
+          const value = typeof item.value === "number" ? item.value.toFixed(4) : item.value;
+
+          // console.log("item.color", item.color);
+
+          // Custom marker with black border
+          const marker = `<span style="display:inline-block;margin-right:4px;border-radius:50%;width:10px;height:10px;${item.color == "#fff" ? "border:1px solid #000;" : ""}background:${item.color};"></span>`;
+          return `${marker}${item.seriesName}: ${value}`;
+        });
+        return `${params[0].axisValue}<br/>${result.join("<br/>")}`;
       }
     }
-  },
-  scales: {
-    x: {
-      display: false,
-      grid: { display: false }
-    },
-    y: {
-      display: false,
-      grid: { display: false }
-    }
-  },
-  type: "line",
-  elements: {
-    point: {
-      radius: 0,
-      hoverRadius: 5,
-      hitRadius: 5
-    }
-  },
-  borderWidth: 2,
+  };
+
+  chartInstance.setOption(option);
+
+  registChart(chartInstance);
+};
+
+onMounted(() => {
+  initChart();
+  window.addEventListener("resize", handleResize);
 });
+
+onUnmounted(() => {
+  window.removeEventListener("resize", handleResize);
+  if (chartInstance) {
+    chartInstance.dispose();
+  }
+});
+
+const handleResize = () => {
+  if (chartInstance) {
+    chartInstance.resize();
+  }
+};
+
+watch(() => props.progress, () => {
+  updateChart();
+});
+
+watch(() => [value1, value2], () => {
+  updateChart();
+}, { deep: true });
+
 
 </script>
 <style>

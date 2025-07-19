@@ -92,16 +92,14 @@
             <v-card-title class="text-h6">性能指标可视化</v-card-title>
             <v-card-text>
               <v-row>
-                <v-col cols="12" md="6">
-                  <div ref="rmseChart" style="height:400px;"></div>
+                <v-col cols="12" md="6" lg="4">
+                  <div ref="rmseChart" style="height:400px; margin:auto"></div>
                 </v-col>
-                <v-col cols="12" md="6">
-                  <div ref="maeR2Chart" style="height:400px;"></div>
+                <v-col cols="12" md="6" lg="4">
+                  <div ref="maeR2Chart" style="height:400px; margin:auto"></div>
                 </v-col>
-              </v-row>
-              <v-row class="mt-4">
-                <v-col cols="12">
-                  <div ref="radarChart" style="height:400px;"></div>
+                <v-col cols="12" md="6" lg="4">
+                  <div ref="radarChart" style="height:400px; margin:auto"></div>
                 </v-col>
               </v-row>
             </v-card-text>
@@ -164,17 +162,21 @@
                   <v-icon class="mr-2" color="info">mdi-chart-line</v-icon>
                   性能分析总结
                 </v-card-title>
-                <v-expansion-panels variant="accordion">
-                  <v-expansion-panel v-for="analysis in performanceAnalysis" :key="analysis.metric"
-                    :title="analysis.title">
-                    <v-expansion-panel-text>
-                      <div class="text-body-1 mb-3">{{ analysis.description }}</div>
-                      <v-alert :type="analysis.recommendation.type" variant="outlined" class="mb-2">
-                        <strong>建议：</strong>{{ analysis.recommendation.text }}
-                      </v-alert>
-                    </v-expansion-panel-text>
-                  </v-expansion-panel>
-                </v-expansion-panels>
+                <v-row>
+                  <v-col col="12" xl="4" lg="6" md="12" sm="12" v-for="analysis in performanceAnalysis"
+                    :key="analysis.metric">
+                    <v-expansion-panels>
+                      <v-expansion-panel :title="analysis.title">
+                        <v-expansion-panel-text>
+                          <div class="text-body-1 mb-3">{{ analysis.description }}</div>
+                          <v-alert :type="analysis.recommendation.type" variant="outlined" class="mb-2">
+                            <strong>建议：</strong>{{ analysis.recommendation.text }}
+                          </v-alert>
+                        </v-expansion-panel-text>
+                      </v-expansion-panel>
+                    </v-expansion-panels>
+                  </v-col>
+                </v-row>
               </v-card>
             </v-col>
           </v-row>
@@ -210,6 +212,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from "vue";
 import * as echarts from "echarts";
+import { registChart } from "@/resize_charts";
 
 interface Metric {
   model: string;
@@ -462,6 +465,8 @@ const initializeCharts = () => {
       }],
       grid: { bottom: 80 }
     });
+
+    registChart(chart);
   }
 
   // MAE与R²对比图
@@ -513,6 +518,8 @@ const initializeCharts = () => {
       ],
       grid: { bottom: 80 }
     });
+
+    registChart(chart);
   }
 
   // 雷达图
@@ -542,9 +549,9 @@ const initializeCharts = () => {
       tooltip: {
         formatter: function (params: EChartsRadarTooltipParams) {
           return `${params.name}<br/>
-            R²: ${(params.value[0] / 100).toFixed(4)}<br/>
-            RMSE: ${(1 - params.value[1] / 100).toFixed(4)}<br/>
-            MAE: ${(1 - params.value[2] / 100).toFixed(4)}`;
+        R²: ${(params.value[0] / 100).toFixed(4)}<br/>
+        RMSE: ${(1 - params.value[1] / 100).toFixed(4)}<br/>
+        MAE: ${(1 - params.value[2] / 100).toFixed(4)}`;
         }
       },
       legend: {
@@ -561,6 +568,9 @@ const initializeCharts = () => {
         data: seriesData
       }]
     });
+
+    // 响应式调整图表大小
+    registChart(chart);
   }
 };
 

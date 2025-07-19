@@ -12,7 +12,7 @@
 
       <!-- 状态指示器 -->
       <div class="d-flex align-center" :class="{ 'mb-4': status === 'training' }">
-        <v-chip :color="getStatusColor(status)" :prepend-icon="getStatusIcon(status)" size="small">
+        <v-chip :color="getStatusColor(status)" :prepend-icon="getStatusIcon(status)" size="small" class="mb-2">
           {{ getStatusText(status) }}
         </v-chip>
         <v-spacer></v-spacer>
@@ -81,9 +81,7 @@
         </div>
 
         <!-- 损失函数图表 -->
-        <div style="height: 250px;" class="mb-4">
-          <Line :data="lossChartData" :options="lossChartOptions" />
-        </div>
+        <div ref="chartContainer" style="height: 250px;" class="mb-4"></div>
 
         <!-- 训练完成操作 -->
         <div v-if="status === 'completed'" class="d-flex justify-end gap-2">
@@ -113,12 +111,9 @@
 </template>
 
 <script lang="ts" setup>
-import { Line } from "vue-chartjs";
-import { Chart as ChartJS, Title, Tooltip, Legend, LineElement, CategoryScale, LinearScale, PointElement } from "chart.js";
-import { ref, computed, onUnmounted, nextTick } from "vue";
+import * as echarts from "echarts";
+import { ref, onUnmounted, nextTick, watch, onMounted } from "vue";
 import { Icon } from "@iconify/vue";
-
-ChartJS.register(Title, Tooltip, Legend, LineElement, CategoryScale, LinearScale, PointElement);
 
 // Props
 interface ModelConfig {
@@ -186,79 +181,123 @@ const trainingHistory = ref({
 let preprocessTimer: number | null = null;
 let trainingTimer: number | null = null;
 
-// 计算属性
-const lossChartData = computed(() => ({
-  labels: trainingHistory.value.epochs.map(epoch => `${epoch}`),
-  datasets: [
-    {
-      label: "训练损失",
-      data: trainingHistory.value.losses,
-      borderColor: "#1976d2",
-      backgroundColor: "rgba(25, 118, 210, 0.1)",
-      tension: 0.4,
-      pointRadius: 2
-    },
-    {
-      label: "验证损失",
-      data: trainingHistory.value.valLosses,
-      borderColor: "#f57c00",
-      backgroundColor: "rgba(245, 124, 0, 0.1)",
-      tension: 0.4,
-      pointRadius: 2
-    }
-  ]
-}));
+// ECharts相关
+const chartContainer = ref<HTMLDivElement>();
+let chartInstance: echarts.ECharts | null = null;
+let resizeObserver: ResizeObserver | null = null;
 
-const lossChartOptions = ref({
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    title: {
-      display: false
-    },
-    legend: {
-      display: true,
-      position: "top" as const,
-      labels: {
-        boxWidth: 12,
-        font: {
-          size: 11
-        }
-      }
-    }
-  },
-  scales: {
-    x: {
-      title: {
-        display: true,
-        text: "轮次",
-        font: {
-          size: 11
-        }
-      },
-      ticks: {
-        font: {
-          size: 10
-        }
-      }
-    },
-    y: {
-      title: {
-        display: true,
-        text: "损失值",
-        font: {
-          size: 11
-        }
-      },
-      beginAtZero: true,
-      ticks: {
-        font: {
-          size: 10
-        }
-      }
+// 初始化图表
+const initChart = () => {
+  if (chartContainer.value && !chartInstance) {
+    chartInstance = echarts.init(chartContainer.value);
+    updateChart();
+
+    // 创建ResizeObserver来监听容器大小变化
+    if (window.ResizeObserver) {
+      resizeObserver = new ResizeObserver(() => {
+        resizeChart();
+      });
+      resizeObserver.observe(chartContainer.value);
     }
   }
-});
+};
+
+// 更新图表
+const updateChart = () => {
+  if (!chartInstance) return;
+
+  const option = {
+    title: {
+      show: false
+    },
+    tooltip: {
+      trigger: "axis",
+      formatter: function (params: Array<{ axisValue: string, seriesName: string, value: number }>) {
+        let result = `轮次 ${params[0].axisValue}<br/>`;
+        params.forEach((param) => {
+          const value = param.value < 0.001 ? param.value.toExponential(2) : param.value.toFixed(4);
+          result += `${param.seriesName}: ${value}<br/>`;
+        });
+        return result;
+      }
+    },
+    legend: {
+      data: ["训练损失", "验证损失"],
+      top: 0,
+      textStyle: {
+        fontSize: 11
+      }
+    },
+    grid: {
+      left: "10%",
+      right: "10%",
+      bottom: "15%",
+      top: "15%"
+    },
+    xAxis: {
+      type: "category",
+      data: trainingHistory.value.epochs,
+      name: "轮次",
+      nameTextStyle: {
+        fontSize: 11
+      },
+      axisLabel: {
+        fontSize: 10
+      }
+    },
+    yAxis: {
+      type: "value",
+      name: "损失值",
+      nameTextStyle: {
+        fontSize: 11
+      },
+      axisLabel: {
+        fontSize: 10
+      }
+    },
+    series: [
+      {
+        name: "训练损失",
+        type: "line",
+        data: trainingHistory.value.losses,
+        smooth: true,
+        lineStyle: {
+          color: "#1976d2",
+          width: 2
+        },
+        itemStyle: {
+          color: "#1976d2"
+        },
+        symbol: "circle",
+        symbolSize: 4
+      },
+      {
+        name: "验证损失",
+        type: "line",
+        data: trainingHistory.value.valLosses,
+        smooth: true,
+        lineStyle: {
+          color: "#f57c00",
+          width: 2
+        },
+        itemStyle: {
+          color: "#f57c00"
+        },
+        symbol: "circle",
+        symbolSize: 4
+      }
+    ]
+  };
+
+  chartInstance.setOption(option);
+};
+
+// 监听训练历史数据变化
+watch(trainingHistory, () => {
+  if (chartInstance) {
+    updateChart();
+  }
+}, { deep: true });
 
 // 方法
 const getModelIcon = (type: string) => {
@@ -427,17 +466,6 @@ const startActualTraining = () => {
   updateTraining();
 };
 
-const getConvergenceRate = (modelType: string) => {
-  // 不同模型类型的收敛特性
-  const rates: { [key: string]: number } = {
-    "RNN": 0.985,
-    "Attention": 0.980,
-    "Hybrid": 0.975,
-    "Ensemble": 0.990
-  };
-  return rates[modelType] || 0.985;
-};
-
 const completeTraining = () => {
   status.value = "completed";
   if (trainingTimer) {
@@ -467,7 +495,40 @@ const resetTraining = () => {
   status.value = "idle";
 };
 
-// 组件卸载时清理定时器
+// 图表初始化
+const initChartWhenVisible = () => {
+  nextTick(() => {
+    if ((status.value === "training" || status.value === "completed") && chartContainer.value && !chartInstance) {
+      initChart();
+    }
+  });
+};
+
+// 响应式调整图表大小
+const resizeChart = () => {
+  if (chartInstance) {
+    chartInstance.resize();
+  }
+};
+
+// 监听窗口大小变化
+const handleResize = () => {
+  resizeChart();
+};
+
+// 监听状态变化，在需要时初始化图表
+watch(status, () => {
+  if (status.value === "training" || status.value === "completed") {
+    initChartWhenVisible();
+  }
+});
+
+// 添加窗口大小变化监听器
+onMounted(() => {
+  window.addEventListener("resize", handleResize);
+});
+
+// 组件卸载时清理定时器和图表
 onUnmounted(() => {
   if (preprocessTimer) {
     clearInterval(preprocessTimer);
@@ -475,6 +536,16 @@ onUnmounted(() => {
   if (trainingTimer) {
     clearInterval(trainingTimer);
   }
+  if (chartInstance) {
+    chartInstance.dispose();
+    chartInstance = null;
+  }
+  if (resizeObserver) {
+    resizeObserver.disconnect();
+    resizeObserver = null;
+  }
+  // 移除窗口大小变化监听器
+  window.removeEventListener("resize", handleResize);
 });
 </script>
 

@@ -53,19 +53,19 @@ const openDrawer = () => {
 </script>
 
 <template>
-  <v-container class="main-container">
+  <div class="main-container">
     <v-layout>
       <v-navigation-drawer style="user-select: none;" v-model="section_opened" :permanent="mdAndUp"
         :temporary="!mdAndUp">
         <v-list>
-          <!-- <v-tooltip text="平台Logo及名称">
+          <v-tooltip text="平台Logo及名称">
             <template v-slot:activator="{ props }">
               <v-list-item v-bind="props">
-                <img src="/nari-logo.png" style="width: 100%" />
-                XXXX预测平台
+                <!-- <img src="/nari-logo.png" style="width: 100%" /> -->
+                XXXX训练与预测平台
               </v-list-item>
             </template>
-          </v-tooltip> -->
+          </v-tooltip>
         </v-list>
 
         <v-divider></v-divider>
@@ -143,23 +143,21 @@ const openDrawer = () => {
       </v-navigation-drawer>
 
       <v-main>
-        <v-container>
-          <router-view v-slot="{ Component }">
-            <transition>
-              <keep-alive>
-                <component :is="Component" />
-              </keep-alive>
-            </transition>
-          </router-view>
-        </v-container>
+        <router-view v-slot="{ Component }">
+          <transition name="fade">
+            <keep-alive>
+              <component :is="Component" />
+            </keep-alive>
+          </transition>
+        </router-view>
       </v-main>
     </v-layout>
 
     <v-fab-transition>
-      <v-btn v-show="showFloatButton" class="float-button" color="primary" fab @click="openDrawer" icon="mdi-menu">
+      <v-btn class="float-button" color="primary" fab @click="openDrawer" icon="mdi-menu">
       </v-btn>
     </v-fab-transition>
-  </v-container>
+  </div>
 </template>
 <style scoped>
 .main-container {
