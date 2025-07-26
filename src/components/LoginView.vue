@@ -5,10 +5,10 @@
         <v-card class="elevation-8 pa-6">
           <v-card-title class="text-center mb-6">
             <div class="text-h4 font-weight-bold text-primary">
-              NARI AI Platform
+              发电功率与电力负荷预测平台
             </div>
             <div class="text-subtitle-1 text-medium-emphasis mt-2">
-              国电南瑞训练与预测平台
+              南京信息工程大学
             </div>
           </v-card-title>
 
