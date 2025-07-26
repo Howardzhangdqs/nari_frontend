@@ -1,11 +1,11 @@
 <template>
-  <v-card class="mt-6 mx-auto overflow-visible" max-width="400">
-    <v-sheet class="v-sheet--offset mx-auto" :color="props.finished ? 'success' : 'primary'" elevation="8"
+  <v-card class="mx-auto overflow-visible" max-width="400">
+    <!-- <v-sheet class="v-sheet--offset mx-auto" :color="props.finished ? 'success' : 'primary'" elevation="8"
       max-width="calc(100% - 16px)" rounded="lg" style="padding: 0 10px 10px 10px">
       <div ref="chartContainer" class="chart-container-width-100" :style="{ height: '100px', width: '100%' }"></div>
-    </v-sheet>
+    </v-sheet> -->
 
-    <v-card-text class="pt-0">
+    <v-card-text class="">
       <div class="subheading" style="margin-top: -6px">
         模型：{{ props.model }}<br />
         <span v-if="props.dataset">数据集：{{ props.dataset }}</span><br />

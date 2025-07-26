@@ -225,7 +225,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted } from "vue";
 
 // 接口定义
 interface Model {
@@ -233,11 +233,11 @@ interface Model {
   name: string;
   description: string;
   type: string;
-  complexity: 'low' | 'medium' | 'high';
+  complexity: "low" | "medium" | "high";
   framework?: string;
   version?: string;
   parameters?: string;
-  status: 'active' | 'training' | 'inactive';
+  status: "active" | "training" | "inactive";
   createdAt: Date;
   updatedAt: Date;
 }
@@ -246,9 +246,9 @@ interface Model {
 const isLoading = ref(false);
 const isSaving = ref(false);
 const isDeleting = ref(false);
-const searchQuery = ref('');
-const filterType = ref('');
-const filterStatus = ref('');
+const searchQuery = ref("");
+const filterType = ref("");
+const filterStatus = ref("");
 const showAddModelDialog = ref(false);
 const showDetailDialog = ref(false);
 const showDeleteDialog = ref(false);
@@ -259,93 +259,93 @@ const isFormValid = ref(false);
 
 // 消息提示
 const showMessage = ref(false);
-const message = ref('');
-const messageType = ref<'success' | 'error' | 'warning' | 'info'>('success');
+const message = ref("");
+const messageType = ref<"success" | "error" | "warning" | "info">("success");
 
 // 表单数据
 const modelForm = ref({
-  name: '',
-  description: '',
-  type: '',
-  complexity: 'medium' as 'low' | 'medium' | 'high',
-  framework: '',
-  version: '',
-  parameters: ''
+  name: "",
+  description: "",
+  type: "",
+  complexity: "medium" as "low" | "medium" | "high",
+  framework: "",
+  version: "",
+  parameters: ""
 });
 
 // 模型数据
 const models = ref<Model[]>([
   {
-    id: '1',
-    name: 'LSTM时序预测模型',
-    description: '长短期记忆网络，适合时间序列预测任务',
-    type: 'RNN',
-    complexity: 'medium',
-    framework: 'PyTorch',
-    version: '1.0.0',
-    parameters: '{"hidden_size": 128, "num_layers": 2, "dropout": 0.2}',
-    status: 'active',
-    createdAt: new Date('2024-01-15'),
-    updatedAt: new Date('2024-01-15')
+    id: "1",
+    name: "LSTM时序预测模型",
+    description: "长短期记忆网络，适合时间序列预测任务",
+    type: "RNN",
+    complexity: "medium",
+    framework: "PyTorch",
+    version: "1.0.0",
+    parameters: "{\"hidden_size\": 128, \"num_layers\": 2, \"dropout\": 0.2}",
+    status: "active",
+    createdAt: new Date("2024-01-15"),
+    updatedAt: new Date("2024-01-15")
   },
   {
-    id: '2',
-    name: 'Transformer注意力模型',
-    description: '基于注意力机制的Transformer模型，处理长序列效果好',
-    type: 'Attention',
-    complexity: 'high',
-    framework: 'TensorFlow',
-    version: '2.1.0',
-    parameters: '{"d_model": 512, "nhead": 8, "num_layers": 6}',
-    status: 'training',
-    createdAt: new Date('2024-01-20'),
-    updatedAt: new Date('2024-01-22')
+    id: "2",
+    name: "Transformer注意力模型",
+    description: "基于注意力机制的Transformer模型，处理长序列效果好",
+    type: "Attention",
+    complexity: "high",
+    framework: "TensorFlow",
+    version: "2.1.0",
+    parameters: "{\"d_model\": 512, \"nhead\": 8, \"num_layers\": 6}",
+    status: "training",
+    createdAt: new Date("2024-01-20"),
+    updatedAt: new Date("2024-01-22")
   },
   {
-    id: '3',
-    name: 'RandomForest集成模型',
-    description: '随机森林集成学习算法，鲁棒性强',
-    type: 'Ensemble',
-    complexity: 'low',
-    framework: 'Scikit-learn',
-    version: '1.5.0',
-    parameters: '{"n_estimators": 100, "max_depth": 10, "random_state": 42}',
-    status: 'active',
-    createdAt: new Date('2024-01-10'),
-    updatedAt: new Date('2024-01-10')
+    id: "3",
+    name: "RandomForest集成模型",
+    description: "随机森林集成学习算法，鲁棒性强",
+    type: "Ensemble",
+    complexity: "low",
+    framework: "Scikit-learn",
+    version: "1.5.0",
+    parameters: "{\"n_estimators\": 100, \"max_depth\": 10, \"random_state\": 42}",
+    status: "active",
+    createdAt: new Date("2024-01-10"),
+    updatedAt: new Date("2024-01-10")
   }
 ]);
 
 // 表格配置
 const headers = [
-  { title: '模型名称', key: 'name', sortable: true },
-  { title: '类型', key: 'type', sortable: true },
-  { title: '复杂度', key: 'complexity', sortable: true },
-  { title: '框架', key: 'framework', sortable: true },
-  { title: '状态', key: 'status', sortable: true },
-  { title: '创建时间', key: 'createdAt', sortable: true },
-  { title: '操作', key: 'actions', sortable: false, width: 180 }
+  { title: "模型名称", key: "name", sortable: true },
+  { title: "类型", key: "type", sortable: true },
+  { title: "复杂度", key: "complexity", sortable: true },
+  { title: "框架", key: "framework", sortable: true },
+  { title: "状态", key: "status", sortable: true },
+  { title: "创建时间", key: "createdAt", sortable: true },
+  { title: "操作", key: "actions", sortable: false, width: 180 }
 ];
 
 // 选项数据
 const modelTypes = [
-  { title: 'RNN', value: 'RNN' },
-  { title: 'CNN', value: 'CNN' },
-  { title: 'Attention', value: 'Attention' },
-  { title: 'Ensemble', value: 'Ensemble' },
-  { title: 'Hybrid', value: 'Hybrid' }
+  { title: "RNN", value: "RNN" },
+  { title: "CNN", value: "CNN" },
+  { title: "Attention", value: "Attention" },
+  { title: "Ensemble", value: "Ensemble" },
+  { title: "Hybrid", value: "Hybrid" }
 ];
 
 const complexityOptions = [
-  { title: '低复杂度', value: 'low' },
-  { title: '中等复杂度', value: 'medium' },
-  { title: '高复杂度', value: 'high' }
+  { title: "低复杂度", value: "low" },
+  { title: "中等复杂度", value: "medium" },
+  { title: "高复杂度", value: "high" }
 ];
 
 const statusOptions = [
-  { title: '活跃', value: 'active' },
-  { title: '训练中', value: 'training' },
-  { title: '不活跃', value: 'inactive' }
+  { title: "活跃", value: "active" },
+  { title: "训练中", value: "training" },
+  { title: "不活跃", value: "inactive" }
 ];
 
 // 计算属性
@@ -378,56 +378,56 @@ const filteredModels = computed(() => {
 // 工具函数
 const getModelTypeColor = (type: string) => {
   const colors: { [key: string]: string } = {
-    'RNN': 'blue',
-    'CNN': 'green',
-    'Attention': 'purple',
-    'Ensemble': 'orange',
-    'Hybrid': 'teal'
+    "RNN": "blue",
+    "CNN": "green",
+    "Attention": "purple",
+    "Ensemble": "orange",
+    "Hybrid": "teal"
   };
-  return colors[type] || 'grey';
+  return colors[type] || "grey";
 };
 
 const getComplexityText = (complexity: string) => {
   const texts: { [key: string]: string } = {
-    'low': '低复杂度',
-    'medium': '中等复杂度',
-    'high': '高复杂度'
+    "low": "低复杂度",
+    "medium": "中等复杂度",
+    "high": "高复杂度"
   };
   return texts[complexity] || complexity;
 };
 
 const getStatusText = (status: string) => {
   const texts: { [key: string]: string } = {
-    'active': '活跃',
-    'training': '训练中',
-    'inactive': '不活跃'
+    "active": "活跃",
+    "training": "训练中",
+    "inactive": "不活跃"
   };
   return texts[status] || status;
 };
 
 const formatDate = (date: Date) => {
-  return date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN', {
-    hour: '2-digit',
-    minute: '2-digit'
+  return date.toLocaleDateString("zh-CN") + " " + date.toLocaleTimeString("zh-CN", {
+    hour: "2-digit",
+    minute: "2-digit"
   });
 };
 
 // 方法
 const clearFilters = () => {
-  searchQuery.value = '';
-  filterType.value = '';
-  filterStatus.value = '';
+  searchQuery.value = "";
+  filterType.value = "";
+  filterStatus.value = "";
 };
 
 const resetForm = () => {
   modelForm.value = {
-    name: '',
-    description: '',
-    type: '',
-    complexity: 'medium',
-    framework: '',
-    version: '',
-    parameters: ''
+    name: "",
+    description: "",
+    type: "",
+    complexity: "medium",
+    framework: "",
+    version: "",
+    parameters: ""
   };
   editingModel.value = null;
 };
@@ -444,9 +444,9 @@ const editModel = (model: Model) => {
     description: model.description,
     type: model.type,
     complexity: model.complexity,
-    framework: model.framework || '',
-    version: model.version || '',
-    parameters: model.parameters || ''
+    framework: model.framework || "",
+    version: model.version || "",
+    parameters: model.parameters || ""
   };
   showAddModelDialog.value = true;
 };
@@ -479,27 +479,27 @@ const saveModel = async () => {
         };
       }
       showMessage.value = true;
-      message.value = '模型更新成功！';
+      message.value = "模型更新成功！";
     } else {
       // 添加新模型
       const newModel: Model = {
         id: Date.now().toString(),
         ...modelForm.value,
-        status: 'inactive',
+        status: "inactive",
         createdAt: new Date(),
         updatedAt: new Date()
       };
       models.value.push(newModel);
       showMessage.value = true;
-      message.value = '模型添加成功！';
+      message.value = "模型添加成功！";
     }
 
-    messageType.value = 'success';
+    messageType.value = "success";
     closeDialog();
   } catch (error) {
     showMessage.value = true;
-    message.value = '操作失败，请重试';
-    messageType.value = 'error';
+    message.value = "操作失败，请重试";
+    messageType.value = "error";
   } finally {
     isSaving.value = false;
   }
@@ -520,14 +520,14 @@ const deleteModel = async () => {
     }
 
     showMessage.value = true;
-    message.value = '模型删除成功！';
-    messageType.value = 'success';
+    message.value = "模型删除成功！";
+    messageType.value = "success";
     showDeleteDialog.value = false;
     modelToDelete.value = null;
   } catch (error) {
     showMessage.value = true;
-    message.value = '删除失败，请重试';
-    messageType.value = 'error';
+    message.value = "删除失败，请重试";
+    messageType.value = "error";
   } finally {
     isDeleting.value = false;
   }
@@ -540,9 +540,9 @@ const exportModel = (model: Model) => {
     exportedAt: new Date().toISOString()
   };
 
-  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  const a = document.createElement("a");
   a.href = url;
   a.download = `${model.name}_${Date.now()}.json`;
   document.body.appendChild(a);
@@ -552,7 +552,7 @@ const exportModel = (model: Model) => {
 
   showMessage.value = true;
   message.value = `模型 "${model.name}" 导出成功！`;
-  messageType.value = 'success';
+  messageType.value = "success";
 };
 
 // 生命周期
