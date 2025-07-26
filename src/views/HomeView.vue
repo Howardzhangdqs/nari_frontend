@@ -3,7 +3,7 @@
   <v-row style="padding: 10px">
 
     <v-col cols="12" sm="12">
-      <v-card title="国电南瑞科技股份有限公司" subtitle="XXXX训练与预测平台">
+      <v-card title="南京信息工程大学" subtitle="发电功率与电力负荷预测平台">
         <v-card-text class="bg-surface-light pt-4">
           这里是简介。
         </v-card-text>
@@ -14,148 +14,33 @@
       <v-row class="gutters-2">
         <v-col cols="12" sm="12">
           <div style="display: flex; flex-direction: column; align-items: stretch;">
-            <div class="text-h6 mb-1" style="line-height: 20px">服务状态</div>
+            <div class="text-h6 mb-1" style="line-height: 20px">模型库</div>
             <hr />
           </div>
         </v-col>
 
-        <!-- GPU 状态 -->
-        <v-col cols="12" sm="6" md="3" lg="6" xl="3">
+        <!-- 模型库展示 -->
+        <v-col v-for="model in modelLibrary" :key="model.id" cols="12" sm="6" md="4" lg="6" xl="4">
           <v-card>
             <v-card-title class="text-subtitle-1">
-              <v-icon class="mr-2" color="primary">mdi-memory</v-icon>
-              GPU 显存
+              <v-icon class="mr-2" :color="getModelTypeColor(model.type)">mdi-brain</v-icon>
+              {{ model.name }}
             </v-card-title>
             <v-card-text>
-              <div class="text-h5 font-weight-bold">{{ serverStatus.gpu.memoryUsed.toFixed(1) }} / {{
-                serverStatus.gpu.memoryTotal.toFixed(1) }}
-                GB</div>
-              <v-progress-linear :model-value="serverStatus.gpu.memoryPercent" color="primary" class="my-2"
-                height="8"></v-progress-linear>
-              <div class="text-caption text-medium-emphasis">使用率: {{ serverStatus.gpu.memoryPercent.toFixed(1) }}%</div>
-            </v-card-text>
-          </v-card>
-        </v-col>
-
-        <!-- GPU 功率 -->
-        <v-col cols="12" sm="6" md="3" lg="6" xl="3">
-          <v-card>
-            <v-card-title class="text-subtitle-1">
-              <v-icon class="mr-2" color="orange">mdi-flash</v-icon>
-              GPU 功率
-            </v-card-title>
-            <v-card-text>
-              <div class="text-h5 font-weight-bold">{{ serverStatus.gpu.powerUsage.toFixed(1) }} W</div>
-              <v-progress-linear :model-value="(serverStatus.gpu.powerUsage / serverStatus.gpu.powerLimit) * 100"
-                color="orange" class="my-2" height="8"></v-progress-linear>
-              <div class="text-caption text-medium-emphasis">限制: {{ serverStatus.gpu.powerLimit }} W</div>
-            </v-card-text>
-          </v-card>
-        </v-col>
-
-        <!-- CPU 使用率 -->
-        <v-col cols="12" sm="6" md="3" lg="6" xl="3">
-          <v-card>
-            <v-card-title class="text-subtitle-1">
-              <v-icon class="mr-2" color="green">mdi-cpu-64-bit</v-icon>
-              CPU 使用率
-            </v-card-title>
-            <v-card-text>
-              <div class="text-h5 font-weight-bold">{{ serverStatus.cpu.usage.toFixed(1) }}%</div>
-              <v-progress-linear :model-value="serverStatus.cpu.usage" color="green" class="my-2"
-                height="8"></v-progress-linear>
-              <div class="text-caption text-medium-emphasis">{{ serverStatus.cpu.cores }} 核心</div>
-            </v-card-text>
-          </v-card>
-        </v-col>
-
-        <!-- 正在训练的模型 -->
-        <v-col cols="12" sm="6" md="3" lg="6" xl="3">
-          <v-card>
-            <v-card-title class="text-subtitle-1">
-              <v-icon class="mr-2" color="blue">mdi-brain</v-icon>
-              任务进行情况
-            </v-card-title>
-            <v-card-text>
-              <div class="text-h5 font-weight-bold">{{ serverStatus.training.activeModels }}
-                <span class="text-body-2 my-2"> 个模型正在训练</span>
-              </div>
-
-              <div class="text-caption text-medium-emphasis">
-                队列中: {{ serverStatus.training.queuedModels }} 个
+              <div class="text-body-2 mb-2">{{ model.description }}</div>
+              <div class="d-flex gap-1" style="gap: 5px">
+                <v-chip size="x-small" :color="getModelTypeColor(model.type)">
+                  {{ model.type }}
+                </v-chip>
+                <v-chip size="x-small" :color="model.complexity === 'high' ? 'orange' : 'green'">
+                  {{ model.complexity === 'high' ? '高复杂度' : '中等复杂度' }}
+                </v-chip>
+                <v-chip size="x-small" color="blue">
+                  {{ model.category }}
+                </v-chip>
               </div>
             </v-card-text>
           </v-card>
-        </v-col>
-
-        <v-col cols="12">
-          <v-row>
-
-            <v-col cols="12" sm="6">
-              <v-card>
-                <v-card-title class="text-subtitle-1">
-                  <v-icon class="mr-2" color="purple">mdi-server</v-icon>
-                  系统信息
-                </v-card-title>
-                <v-card-text>
-                  <v-row dense>
-                    <v-col cols="6">
-                      <div class="text-caption text-medium-emphasis">操作系统</div>
-                      <div class="text-body-2">{{ serverStatus.system.os }}</div>
-                    </v-col>
-                    <v-col cols="6">
-                      <div class="text-caption text-medium-emphasis">运行时间</div>
-                      <div class="text-body-2">{{ serverStatus.system.uptime }}</div>
-                    </v-col>
-                    <v-col cols="6">
-                      <div class="text-caption text-medium-emphasis">内存使用</div>
-                      <div class="text-body-2">{{ serverStatus.system.memoryUsed.toFixed(1) }} / {{
-                        serverStatus.system.memoryTotal }} GB
-                      </div>
-                    </v-col>
-                    <v-col cols="6">
-                      <div class="text-caption text-medium-emphasis">磁盘使用</div>
-                      <div class="text-body-2">{{ serverStatus.system.diskUsed.toFixed(1) }} / {{
-                        serverStatus.system.diskTotal.toFixed(1) }} TB
-                      </div>
-                    </v-col>
-                  </v-row>
-                </v-card-text>
-              </v-card>
-            </v-col>
-
-            <!-- 服务状态 -->
-            <v-col cols="12" sm="6">
-              <v-card>
-                <v-card-title class="text-subtitle-1">
-                  <v-icon class="mr-2" color="teal">mdi-cog</v-icon>
-                  服务状态
-                </v-card-title>
-                <v-card-text>
-                  <div v-for="service in serverStatus.services" :key="service.name" class="d-flex align-center mb-2">
-                    <v-icon
-                      :color="service.status === 'running' ? 'success' : service.status === 'stopped' ? 'error' : 'warning'"
-                      class="mr-2">
-                      {{ service.status === 'running' ? 'mdi-check-circle' : service.status === 'stopped' ?
-                        'mdi-close-circle'
-                        : 'mdi-alert-circle' }}
-                    </v-icon>
-                    <div class="flex-grow-1">
-                      <div class="text-body-2">{{ service.name }}</div>
-                      <div class="text-caption text-medium-emphasis">{{ service.description }}</div>
-                    </div>
-                    <v-chip
-                      :color="service.status === 'running' ? 'success' : service.status === 'stopped' ? 'error' : 'warning'"
-                      size="x-small" variant="flat">
-                      {{ service.status === 'running' ? '运行中' : service.status === 'stopped' ? '已停止' : '连接丢失' }}
-                    </v-chip>
-                  </div>
-                </v-card-text>
-              </v-card>
-            </v-col>
-
-
-          </v-row>
         </v-col>
       </v-row>
     </v-col>
@@ -216,39 +101,6 @@ interface TrainingSession {
   finished: boolean;
 }
 
-interface ServerStatus {
-  gpu: {
-    memoryUsed: number;
-    memoryTotal: number;
-    memoryPercent: number;
-    powerUsage: number;
-    powerLimit: number;
-    temperature: number;
-  };
-  cpu: {
-    usage: number;
-    cores: number;
-    temperature: number;
-  };
-  training: {
-    activeModels: number;
-    queuedModels: number;
-  };
-  system: {
-    os: string;
-    uptime: string;
-    memoryUsed: number;
-    memoryTotal: number;
-    diskUsed: number;
-    diskTotal: number;
-  };
-  services: Array<{
-    name: string;
-    description: string;
-    status: "running" | "stopped" | "warning";
-  }>;
-}
-
 const trainingSessions = ref<{
   xgboost: TrainingSession;
   lightgbm: TrainingSession;
@@ -281,55 +133,84 @@ const trainingSessions = ref<{
   } as TrainingSession
 });
 
-const serverStatus = ref<ServerStatus>({
-  gpu: {
-    memoryUsed: 18.2,
-    memoryTotal: 24.0,
-    memoryPercent: 75.8,
-    powerUsage: 280,
-    powerLimit: 350,
-    temperature: 72
+// AI模型库
+const modelLibrary = ref([
+  {
+    id: 1,
+    name: "LSTM",
+    description: "长短期记忆网络，适合时序预测",
+    type: "RNN",
+    complexity: "medium",
+    category: "深度学习"
   },
-  cpu: {
-    usage: 45.6,
-    cores: 16,
-    temperature: 58
+  {
+    id: 2,
+    name: "GRU",
+    description: "门控循环单元，轻量级RNN",
+    type: "RNN",
+    complexity: "medium",
+    category: "深度学习"
   },
-  training: {
-    activeModels: 4,
-    queuedModels: 2
+  {
+    id: 3,
+    name: "Transformer",
+    description: "注意力机制，处理长序列",
+    type: "Attention",
+    complexity: "high",
+    category: "深度学习"
   },
-  system: {
-    os: "Ubuntu 22.04 LTS",
-    uptime: "15天 8小时",
-    memoryUsed: 42.3,
-    memoryTotal: 64.0,
-    diskUsed: 1.2,
-    diskTotal: 2.0
+  {
+    id: 4,
+    name: "Informer",
+    description: "高效长序列预测模型",
+    type: "Attention",
+    complexity: "high",
+    category: "深度学习"
   },
-  services: [
-    {
-      name: "训练服务",
-      description: "机器学习模型训练服务",
-      status: "running"
-    },
-    {
-      name: "数据库服务",
-      description: "MongoDB 数据库",
-      status: "running"
-    },
-    {
-      name: "Redis 缓存",
-      description: "Redis 内存缓存服务",
-      status: "running"
-    },
-    {
-      name: "文件存储",
-      description: "MinIO 对象存储服务",
-      status: "warning"
-    }
-  ]
-});
+  {
+    id: 5,
+    name: "CNN-LSTM",
+    description: "卷积神经网络+LSTM混合模型",
+    type: "Hybrid",
+    complexity: "high",
+    category: "深度学习"
+  },
+  {
+    id: 6,
+    name: "Random Forest",
+    description: "随机森林集成学习",
+    type: "Ensemble",
+    complexity: "medium",
+    category: "机器学习"
+  },
+  {
+    id: 7,
+    name: "XGBoost",
+    description: "梯度提升决策树",
+    type: "Ensemble",
+    complexity: "medium",
+    category: "机器学习"
+  },
+  {
+    id: 8,
+    name: "LightGBM",
+    description: "轻量级梯度提升框架",
+    type: "Ensemble",
+    complexity: "medium",
+    category: "机器学习"
+  }
+]);
+
+// 获取模型类型颜色
+const getModelTypeColor = (type: string) => {
+  const colors: { [key: string]: string } = {
+    "RNN": "blue",
+    "Attention": "purple",
+    "Hybrid": "orange",
+    "Ensemble": "green"
+  };
+  return colors[type] || "grey";
+};
 
 let intervalId: number | null = null;
 
@@ -358,33 +239,9 @@ const updateTrainingSessions = () => {
   });
 };
 
-const updateServerStatus = () => {
-  // 模拟 GPU 显存使用的变化
-  const memoryChange = (Math.random() - 0.5) * 0.5;
-  serverStatus.value.gpu.memoryUsed = Math.max(10, Math.min(23, serverStatus.value.gpu.memoryUsed + memoryChange));
-  serverStatus.value.gpu.memoryPercent = (serverStatus.value.gpu.memoryUsed / serverStatus.value.gpu.memoryTotal) * 100;
-
-  // 模拟 GPU 功率变化
-  const powerChange = (Math.random() - 0.5) * 20;
-  serverStatus.value.gpu.powerUsage = Math.max(200, Math.min(340, serverStatus.value.gpu.powerUsage + powerChange));
-
-  // 模拟 CPU 使用率变化
-  const cpuChange = (Math.random() - 0.5) * 10;
-  serverStatus.value.cpu.usage = Math.max(20, Math.min(90, serverStatus.value.cpu.usage + cpuChange));
-
-  // 更新正在训练的模型数量
-  const activeTraining = Object.values(trainingSessions.value).filter(session => !session.finished).length;
-  serverStatus.value.training.activeModels = activeTraining;
-
-  // 模拟系统内存使用变化
-  const memChange = (Math.random() - 0.5) * 2;
-  serverStatus.value.system.memoryUsed = Math.max(30, Math.min(60, serverStatus.value.system.memoryUsed + memChange));
-};
-
 onMounted(() => {
   intervalId = setInterval(() => {
     updateTrainingSessions();
-    updateServerStatus();
   }, 1000); // 每秒更新一次
 });
 

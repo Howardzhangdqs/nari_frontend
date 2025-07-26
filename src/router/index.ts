@@ -4,6 +4,8 @@ import CompareView from "../views/CompareView.vue";
 import FeatureView from "../views/FeatureView.vue";
 import DataView from "../views/DataView.vue";
 import TrainView from "../views/TrainView.vue";
+import MonitorView from "../views/MonitorView.vue";
+import ModelManageView from "../views/ModelManageView.vue";
 import PredictView from "../views/PredictView.vue";
 
 const router = createRouter({
@@ -33,6 +35,16 @@ const router = createRouter({
       path: "/train",
       name: "train",
       component: TrainView,
+    },
+    {
+      path: "/monitor",
+      name: "monitor",
+      component: MonitorView,
+    },
+    {
+      path: "/models",
+      name: "models",
+      component: ModelManageView,
     },
     {
       path: "/predict",

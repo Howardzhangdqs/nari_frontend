@@ -92,14 +92,14 @@
             <v-card-title class="text-h6">性能指标可视化</v-card-title>
             <v-card-text>
               <v-row>
-                <v-col cols="12" md="6" lg="4">
+                <v-col cols="12" md="6" lg="6" xl="3">
                   <div ref="rmseChart" style="height:400px; margin:auto"></div>
                 </v-col>
-                <v-col cols="12" md="6" lg="4">
+                <v-col cols="12" md="6" lg="6" xl="3">
                   <div ref="maeR2Chart" style="height:400px; margin:auto"></div>
                 </v-col>
-                <v-col cols="12" md="6" lg="4">
-                  <div ref="radarChart" style="height:400px; margin:auto"></div>
+                <v-col cols="12" md="12" lg="12" xl="6">
+                  <div ref="predictionChart" style="height:400px; margin:auto"></div>
                 </v-col>
               </v-row>
             </v-card-text>
@@ -166,7 +166,7 @@
                   <v-col col="12" xl="4" lg="6" md="12" sm="12" v-for="analysis in performanceAnalysis"
                     :key="analysis.metric">
                     <v-expansion-panels>
-                      <v-expansion-panel :title="analysis.title">
+                      <v-expansion-panel :title="analysis.title" :model-value="true">
                         <v-expansion-panel-text>
                           <div class="text-body-1 mb-3">{{ analysis.description }}</div>
                           <v-alert :type="analysis.recommendation.type" variant="outlined" class="mb-2">
@@ -181,25 +181,77 @@
             </v-col>
           </v-row>
 
-          <!-- 导出功能 -->
+          <!-- 模型导出功能 -->
           <v-row class="mt-4">
             <v-col cols="12">
               <v-card class="pa-4">
                 <v-card-title class="text-h6 pa-0 mb-3">
                   <v-icon class="mr-2" color="primary">mdi-download</v-icon>
-                  导出对比报告
+                  模型导出
                 </v-card-title>
-                <div class="d-flex justify-start gap-2">
-                  <v-btn @click="exportToPDF" prepend-icon="mdi-file-pdf-box" color="primary">
-                    导出PDF报告
-                  </v-btn>
-                  <v-btn @click="exportToExcel" prepend-icon="mdi-file-excel" color="primary">
-                    导出Excel数据
-                  </v-btn>
-                  <v-btn @click="exportCharts" prepend-icon="mdi-image" color="primary">
-                    导出图表
-                  </v-btn>
-                </div>
+                <v-card-text class="pa-0">
+                  <div class="text-body-2 mb-4 text-medium-emphasis">
+                    选择需要导出的模型和导出类型，支持导出训练好的模型文件、配置参数和模型定义文件。
+                  </div>
+
+                  <!-- 模型选择 -->
+                  <v-row class="mb-1">
+                    <v-col cols="12" md="6">
+                      <v-select v-model="selectedExportModels" :items="filteredMetrics" item-title="model"
+                        item-value="model" label="选择要导出的模型" multiple chips variant="outlined" hint="可选择多个模型进行批量导出"
+                        persistent-hint></v-select>
+                    </v-col>
+                    <v-col cols="12" md="6">
+                      <v-select v-model="exportFormat" :items="exportFormats" label="导出格式" variant="outlined"
+                        hint="选择模型文件的导出格式" persistent-hint></v-select>
+                    </v-col>
+                  </v-row>
+
+
+                  <!-- 导出选项 -->
+                  <v-expansion-panels class="mb-4" variant="accordion">
+                    <v-expansion-panel title="高级导出选项">
+                      <v-expansion-panel-text>
+                        <v-row>
+                          <v-col cols="12" md="6">
+                            <v-checkbox v-model="exportOptions.includeWeights" label="包含模型权重" density="compact"
+                              hint="导出训练好的模型权重参数"></v-checkbox>
+                            <v-checkbox v-model="exportOptions.includeOptimizer" label="包含优化器状态" density="compact"
+                              hint="导出优化器的状态信息"></v-checkbox>
+                            <v-checkbox v-model="exportOptions.includeMetrics" label="包含性能指标" density="compact"
+                              hint="导出模型的性能评估指标"></v-checkbox>
+                          </v-col>
+                          <v-col cols="12" md="6">
+                            <v-checkbox v-model="exportOptions.compressFiles" label="压缩导出文件" density="compact"
+                              hint="将导出文件打包为ZIP格式"></v-checkbox>
+                            <v-checkbox v-model="exportOptions.includeDocumentation" label="包含文档说明" density="compact"
+                              hint="生成模型使用说明文档"></v-checkbox>
+                            <v-text-field v-model="exportOptions.version" label="版本号" variant="outlined"
+                              density="compact" hint="为导出的模型指定版本号"></v-text-field>
+                          </v-col>
+                        </v-row>
+                      </v-expansion-panel-text>
+                    </v-expansion-panel>
+                  </v-expansion-panels>
+
+                  <!-- 导出按钮组 -->
+                  <div class="d-flex flex-wrap gap-3">
+                    <v-btn @click="exportModelFiles" prepend-icon="mdi-brain" color="primary"
+                      :disabled="selectedExportModels.length === 0" :loading="isExportingModels">
+                      导出模型文件
+                    </v-btn>
+                    <v-btn @click="exportModelConfigs" prepend-icon="mdi-cog" color="success"
+                      :disabled="selectedExportModels.length === 0" :loading="isExportingConfigs">
+                      导出配置参数
+                    </v-btn>
+                    <v-btn @click="exportModelDefinitions" prepend-icon="mdi-code-json" color="info"
+                      :disabled="selectedExportModels.length === 0" :loading="isExportingDefinitions">
+                      导出定义文件
+                    </v-btn>
+                  </div>
+
+
+                </v-card-text>
               </v-card>
             </v-col>
           </v-row>
@@ -271,6 +323,30 @@ const chartType = ref("bar");
 const showDataTable = ref(true);
 const isGenerating = ref(false);
 
+// 模型导出相关
+const selectedExportModels = ref<string[]>([]);
+const exportFormat = ref("pytorch");
+const isExportingModels = ref(false);
+const isExportingConfigs = ref(false);
+const isExportingDefinitions = ref(false);
+
+const exportFormats = [
+  { title: "PyTorch (.pth)", value: "pytorch" },
+  { title: "TensorFlow (.pb)", value: "tensorflow" },
+  { title: "ONNX (.onnx)", value: "onnx" },
+  { title: "Scikit-learn (.pkl)", value: "sklearn" },
+  { title: "JSON (.json)", value: "json" }
+];
+
+const exportOptions = ref({
+  includeWeights: true,
+  includeOptimizer: false,
+  includeMetrics: true,
+  compressFiles: true,
+  includeDocumentation: true,
+  version: "1.0.0"
+});
+
 const updateClickedModel = (modelId: string) => {
   if (selectedModels.value.includes(modelId)) {
     selectedModels.value = selectedModels.value.filter(id => id !== modelId);
@@ -324,7 +400,39 @@ const filteredMetrics = computed(() => {
 // 图表引用
 const rmseChart = ref<HTMLDivElement | null>(null);
 const maeR2Chart = ref<HTMLDivElement | null>(null);
-const radarChart = ref<HTMLDivElement | null>(null);
+const predictionChart = ref<HTMLDivElement | null>(null);
+
+// 生成模拟的预测数据
+const generatePredictionData = (modelName: string, numPoints: number = 50) => {
+  const actualValues: number[] = [];
+  const predictedValues: number[] = [];
+
+  // 基于模型性能生成不同精度的预测数据
+  const model = allMetrics.find(m => m.model === modelName);
+  const baseAccuracy = model ? (1 - model.rmse) : 0.7; // 使用RMSE来确定准确性
+
+  for (let i = 0; i < numPoints; i++) {
+    // 生成实际值（模拟时间序列数据）
+    const time = i / numPoints * 4 * Math.PI;
+    const actual = 50 + 20 * Math.sin(time) + 10 * Math.cos(time * 2) + (Math.random() - 0.5) * 5;
+    actualValues.push(actual);
+
+    // 基于实际值和模型精度生成预测值
+    const noise = (Math.random() - 0.5) * 10 * (1 - baseAccuracy);
+    const predicted = actual + noise;
+    predictedValues.push(predicted);
+  }
+
+  return { actualValues, predictedValues };
+};
+
+// 获取所有选中模型的预测数据
+const predictionData = computed(() => {
+  return filteredMetrics.value.map(metric => ({
+    modelName: metric.model,
+    ...generatePredictionData(metric.model)
+  }));
+});
 
 // 最佳模型计算
 const bestModel = computed(() => {
@@ -412,20 +520,150 @@ const getBestValueClass = (metric: string, value: number) => {
   return isBest ? "font-weight-bold text-success" : "";
 };
 
-// 导出功能
-const exportToPDF = () => {
-  console.log("导出PDF报告");
-  // 实现PDF导出逻辑
+// 模型导出功能
+const exportModelFiles = async () => {
+  isExportingModels.value = true;
+  try {
+    // 模拟模型文件导出过程
+    await new Promise(resolve => setTimeout(resolve, 3000));
+
+    // 生成下载链接
+    const exportData = {
+      models: selectedExportModels.value,
+      format: exportFormat.value,
+      options: exportOptions.value,
+      timestamp: new Date().toISOString()
+    };
+
+    // 模拟文件下载
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `models_${exportFormat.value}_${Date.now()}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    console.log(`导出模型文件: ${selectedExportModels.value.join(", ")} - 格式: ${exportFormat.value}`);
+  } catch (error) {
+    console.error("模型文件导出失败:", error);
+  } finally {
+    isExportingModels.value = false;
+  }
 };
 
-const exportToExcel = () => {
-  console.log("导出Excel数据");
-  // 实现Excel导出逻辑
+const exportModelConfigs = async () => {
+  isExportingConfigs.value = true;
+  try {
+    // 模拟配置参数导出过程
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    const configData = selectedExportModels.value.map(modelName => {
+      const metric = filteredMetrics.value.find(m => m.model === modelName);
+      return {
+        modelName,
+        hyperparameters: {
+          learning_rate: 0.001,
+          batch_size: 32,
+          epochs: 100,
+          optimizer: "Adam",
+          loss_function: "MSE"
+        },
+        architecture: {
+          layers: ["Dense(64)", "ReLU", "Dense(32)", "ReLU", "Dense(1)"],
+          input_shape: [96],
+          output_shape: [1]
+        },
+        performance: metric ? {
+          rmse: metric.rmse,
+          mae: metric.mae,
+          r2: metric.r2
+        } : null,
+        version: exportOptions.value.version
+      };
+    });
+
+    const blob = new Blob([JSON.stringify(configData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `model_configs_${Date.now()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    console.log(`导出配置参数: ${selectedExportModels.value.join(", ")}`);
+  } catch (error) {
+    console.error("配置参数导出失败:", error);
+  } finally {
+    isExportingConfigs.value = false;
+  }
 };
 
-const exportCharts = () => {
-  console.log("导出图表");
-  // 实现图表导出逻辑
+const exportModelDefinitions = async () => {
+  isExportingDefinitions.value = true;
+  try {
+    // 模拟模型定义文件导出过程
+    await new Promise(resolve => setTimeout(resolve, 2500));
+
+    const definitionData = selectedExportModels.value.map(modelName => {
+      return {
+        modelName,
+        framework: exportFormat.value,
+        definition: {
+          class: `${modelName.replace(/\s+/g, "")}Model`,
+          imports: [
+            "import torch",
+            "import torch.nn as nn",
+            "import numpy as np"
+          ],
+          code: `
+class ${modelName.replace(/\s+/g, "")}Model(nn.Module):
+    def __init__(self, input_size=96, hidden_size=64, output_size=1):
+        super().__init__()
+        self.layer1 = nn.Linear(input_size, hidden_size)
+        self.layer2 = nn.Linear(hidden_size, 32)
+        self.layer3 = nn.Linear(32, output_size)
+        self.relu = nn.ReLU()
+
+    def forward(self, x):
+        x = self.relu(self.layer1(x))
+        x = self.relu(self.layer2(x))
+        x = self.layer3(x)
+        return x
+          `,
+          usage_example: `
+# 模型使用示例
+model = ${modelName.replace(/\s+/g, "")}Model()
+input_tensor = torch.randn(1, 96)
+output = model(input_tensor)
+print(f"预测结果: {output.item():.4f}")
+          `
+        },
+        created_at: new Date().toISOString(),
+        version: exportOptions.value.version
+      };
+    });
+
+    const blob = new Blob([JSON.stringify(definitionData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `model_definitions_${Date.now()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    console.log(`导出定义文件: ${selectedExportModels.value.join(", ")}`);
+  } catch (error) {
+    console.error("定义文件导出失败:", error);
+  } finally {
+    isExportingDefinitions.value = false;
+  }
 };
 
 // 初始化图表
@@ -522,54 +760,87 @@ const initializeCharts = () => {
     registChart(chart);
   }
 
-  // 雷达图
-  if (radarChart.value && filteredMetrics.value.length > 0) {
-    const chart = echarts.init(radarChart.value);
+  // 预测值与实际值对比图
+  if (predictionChart.value && filteredMetrics.value.length > 0) {
+    const chart = echarts.init(predictionChart.value);
 
-    const indicator = [
-      { name: "R² (×100)", max: 100 },
-      { name: "RMSE (反向)", max: 100 },
-      { name: "MAE (反向)", max: 100 }
-    ];
+    // 准备系列数据
+    const series: echarts.SeriesOption[] = [];
+    const colors = ["#1976d2", "#43a047", "#fbc02d", "#e91e63", "#9c27b0", "#ff9800"];
 
-    const seriesData = filteredMetrics.value.map((metric, index) => ({
-      name: metric.model,
-      value: [
-        metric.r2 * 100,
-        (1 - metric.rmse) * 100,
-        (1 - metric.mae) * 100
-      ],
-      itemStyle: {
-        color: ["#1976d2", "#43a047", "#fbc02d", "#e91e63", "#9c27b0", "#ff9800"][index]
-      }
-    }));
+    // 添加实际值系列（所有模型共用同一条实际值线）
+    const actualData = predictionData.value[0]?.actualValues || [];
+    series.push({
+      name: "实际值",
+      type: "line",
+      data: actualData,
+      itemStyle: { color: "#000000" },
+      lineStyle: { width: 3, type: "solid", opacity: 0.5 },
+      symbol: "circle",
+      symbolSize: 0
+    });
+
+    // 为每个模型添加预测值系列
+    predictionData.value.forEach((data, index) => {
+      series.push({
+        name: `${data.modelName}预测值`,
+        type: "line",
+        data: data.predictedValues,
+        itemStyle: { color: colors[index % colors.length] },
+        lineStyle: { width: 2, type: "dashed" },
+        symbol: "diamond",
+        symbolSize: 3
+      });
+    });
 
     chart.setOption({
-      title: { text: "模型综合性能雷达图", left: "center" },
+      title: { text: "预测值与实际值对比", left: "center" },
       tooltip: {
-        formatter: function (params: EChartsRadarTooltipParams) {
-          return `${params.name}<br/>
-        R²: ${(params.value[0] / 100).toFixed(4)}<br/>
-        RMSE: ${(1 - params.value[1] / 100).toFixed(4)}<br/>
-        MAE: ${(1 - params.value[2] / 100).toFixed(4)}`;
+        trigger: "axis",
+        formatter: function (params: any[]) {
+          let result = `时间点 ${params[0].dataIndex + 1}<br/>`;
+          params.forEach((param: any) => {
+            result += `${param.seriesName}: ${param.value.toFixed(2)}<br/>`;
+          });
+          return result;
         }
       },
       legend: {
-        data: filteredMetrics.value.map(m => m.model),
-        bottom: 10
+        data: ["实际值", ...predictionData.value.map(d => `${d.modelName}预测值`)],
+        bottom: 10,
+        type: "scroll"
       },
-      radar: {
-        indicator: indicator,
-        center: ["50%", "50%"],
-        radius: "60%"
+      xAxis: {
+        type: "category",
+        data: Array.from({ length: actualData.length }, (_, i) => i + 1),
+        name: "时间点",
+        nameLocation: "middle",
+        nameGap: 25
       },
-      series: [{
-        type: "radar",
-        data: seriesData
-      }]
+      yAxis: {
+        type: "value",
+        name: "数值",
+        nameLocation: "middle",
+        nameGap: 40
+      },
+      series: series,
+      grid: {
+        left: 60,
+        right: 20,
+        bottom: 80,
+        top: 60
+      },
+      dataZoom: [
+        {
+          type: "slider",
+          start: 0,
+          end: 100,
+          height: 20,
+          bottom: 20
+        }
+      ]
     });
 
-    // 响应式调整图表大小
     registChart(chart);
   }
 };

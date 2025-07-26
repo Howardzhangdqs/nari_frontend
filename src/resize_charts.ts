@@ -31,7 +31,7 @@ window.addEventListener("load", () => {
     excuteResize();
   });
 
-  // setInterval(excuteResize, 1000);
+  setInterval(excuteResize, 1000);
 });
 
 export { registChart, excuteResize };

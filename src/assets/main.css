@@ -80,8 +80,16 @@
   font-weight: bold !important;
 }
 
+.gap-1 {
+  gap: 5px;
+}
+
 .gap-2 {
   gap: 10px;
+}
+
+.gap-3 {
+  gap: 15px;
 }
 
 .select-none {

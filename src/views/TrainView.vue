@@ -1,5 +1,5 @@
 <template>
-  <v-stepper :items="['参数配置', '模型选择', '训练监控']" next-text="下一步" prev-text="上一步" v-model="currentStep">
+  <v-stepper :items="['参数配置', '模型选择']" next-text="下一步" prev-text="上一步" v-model="currentStep">
     <!-- 第一步：参数配置 -->
     <template v-slot:[`item.1`]>
       <v-card title="模型训练参数配置" flat>
@@ -149,25 +149,40 @@
         <div class="mb-6">
           <div class="text-h6 mb-3">人工智能模型</div>
           <v-row>
-            <v-col v-for="model in aiModels" :key="model.id" cols="12" md="4" lg="3">
-              <v-card variant="outlined" class="pa-3" :class="{ 'border-primary': model.selected }"
-                @click="model.selected = !model.selected">
-                <div class="d-flex align-center mb-2">
-                  <v-checkbox v-model="model.selected" color="primary" hide-details style="margin: -13px 0">
-                    <template v-slot:label>
-                      <span>{{ model.name }}</span>
-                    </template>
-                  </v-checkbox>
-                </div>
-                <div class="text-body-2 text-medium-emphasis mb-2">{{ model.description }}</div>
-                <div class="d-flex gap-1" style="gap: 5px">
-                  <v-chip size="x-small" :color="getModelTypeColor(model.type)">
-                    {{ model.type }}
+            <v-col cols="12" md="6">
+              <v-select v-model="selectedModelIds" :items="aiModels" item-title="title" item-value="id" label="选择AI模型"
+                multiple chips closable-chips variant="outlined" hint="可选择多个模型进行训练" persistent-hint>
+                <template v-slot:selection="{ item, index }">
+                  <v-chip v-if="index < 3" size="small" closable @click:close="removeModel(item.raw.id)">
+                    {{ item.raw.name }}
                   </v-chip>
-                  <v-chip size="x-small" color="orange" v-if="model.complexity === 'high'">高复杂度</v-chip>
-                  <v-chip size="x-small" color="green" v-else>中等复杂度</v-chip>
-                </div>
-              </v-card>
+                  <span v-if="index === 3" class="text-grey text-caption align-self-center">
+                    (+{{ selectedModelIds.length - 3 }} 其他)
+                  </span>
+                </template>
+                <template v-slot:item="{ props, item }">
+                  <v-list-item v-bind="props" :title="item.raw.name">
+                    <template v-slot:prepend="{ isActive }">
+                      <v-list-item-action start>
+                        <v-checkbox-btn :model-value="isActive"></v-checkbox-btn>
+                      </v-list-item-action>
+                    </template>
+                    <v-list-item-subtitle>
+                      {{ item.raw.description }}
+                    </v-list-item-subtitle>
+                    <template v-slot:append>
+                      <div class="d-flex gap-1" style="gap: 4px">
+                        <v-chip size="x-small" :color="getModelTypeColor(item.raw.type)">
+                          {{ item.raw.type }}
+                        </v-chip>
+                        <v-chip size="x-small" :color="item.raw.complexity === 'high' ? 'orange' : 'green'">
+                          {{ item.raw.complexity === 'high' ? '高复杂度' : '中等复杂度' }}
+                        </v-chip>
+                      </div>
+                    </template>
+                  </v-list-item>
+                </template>
+              </v-select>
             </v-col>
           </v-row>
         </div>
@@ -182,71 +197,25 @@
           <div class="text-body-2 text-medium-emphasis mt-1">
             预计训练时间：{{ estimatedTrainingTime }} 分钟
           </div>
-        </v-card>
-      </v-card>
-    </template>
-
-    <!-- 第三步：训练监控 -->
-    <template v-slot:[`item.3`]>
-      <v-card title="模型训练实时监控" flat>
-        <v-card-text>
-          <!-- 批量操作按钮 -->
-          <div class="d-flex justify-space-between align-center mb-4">
-            <v-btn @click="startAllTraining" color="primary" prepend-icon="mdi-play" :disabled="isAnyTraining">
-              开始全部训练
+          <div class="mt-4">
+            <v-btn color="primary" size="large" @click="startTraining" :disabled="selectedAiModels.length === 0">
+              开始训练
             </v-btn>
-            <v-btn @click="stopAllTraining" color="error" prepend-icon="mdi-stop" variant="outlined"
-              :disabled="!isAnyTraining">
-              停止全部训练
+            <v-btn color="info" variant="outlined" class="ml-3" @click="goToMonitor">
+              查看训练监控
             </v-btn>
           </div>
-
-          <!-- 训练进度总览 -->
-          <v-card variant="tonal" color="primary" class="mb-4">
-            <v-card-text>
-              <div class="d-flex justify-space-between align-center">
-                <div>
-                  <div class="text-h6">训练总进度</div>
-                  <div class="text-body-2">{{ completedModels }}/{{ selectedAiModels.length }} 个模型已完成</div>
-                </div>
-                <div class="text-right">
-                  <div class="text-h4">{{ Math.round(overallProgress) }}%</div>
-                </div>
-              </div>
-              <v-progress-linear :model-value="overallProgress" color="white" class="mt-2"
-                height="8"></v-progress-linear>
-            </v-card-text>
-          </v-card>
-
-          <!-- 每个选中的模型训练组件 -->
-          <v-row>
-            <v-col col="12" md="12" lg="6" xl="4" xxl="3" v-for="(model, idx) in selectedAiModels" :key="model.id">
-              <ModelTrainer :model="model" :train-params="trainParams" @training-completed="onModelCompleted"
-                :ref="el => modelTrainerRefs[idx] = el" />
-            </v-col>
-          </v-row>
-
-          <!-- 训练总结（当有模型完成训练时显示） -->
-          <TrainingSummary v-if="completedModels > 0" :model-results="modelResults" />
-
-          <!-- 没有选择模型的提示 -->
-          <v-alert v-if="selectedAiModels.length === 0" type="info" variant="tonal" class="text-center">
-            <div class="text-h6 mb-2">请先选择要训练的模型</div>
-            <div class="text-body-2">返回上一步选择至少一个AI模型开始训练</div>
-          </v-alert>
-        </v-card-text>
+        </v-card>
       </v-card>
     </template>
   </v-stepper>
 </template>
 
 <script lang="ts" setup>
-import { Chart as ChartJS, Title, Tooltip, Legend, LineElement, CategoryScale, LinearScale, PointElement } from "chart.js";
-import { ref, computed, onUnmounted } from "vue";
-import ModelTrainer from "@/components/ModelTrainer.vue";
-import TrainingSummary from "@/components/TrainingSummary.vue";
+import { ref, computed } from "vue";
+import { useRouter } from "vue-router";
 
-ChartJS.register(Title, Tooltip, Legend, LineElement, CategoryScale, LinearScale, PointElement);
+const router = useRouter();
 
 // 步骤控制
 const currentStep = ref(1);
@@ -344,64 +313,63 @@ const aiModels = ref([
   {
     id: 1,
     name: "LSTM",
+    title: "LSTM - 长短期记忆网络",
     description: "长短期记忆网络，适合时序预测",
     type: "RNN",
-    complexity: "medium",
-    selected: true
+    complexity: "medium"
   },
   {
     id: 2,
     name: "GRU",
+    title: "GRU - 门控循环单元",
     description: "门控循环单元，轻量级RNN",
     type: "RNN",
-    complexity: "medium",
-    selected: false
+    complexity: "medium"
   },
   {
     id: 3,
     name: "Transformer",
+    title: "Transformer - 注意力机制",
     description: "注意力机制，处理长序列",
     type: "Attention",
-    complexity: "high",
-    selected: true
+    complexity: "high"
   },
   {
     id: 4,
     name: "Informer",
+    title: "Informer - 高效长序列预测",
     description: "高效长序列预测模型",
     type: "Attention",
-    complexity: "high",
-    selected: false
+    complexity: "high"
   },
   {
     id: 5,
     name: "CNN-LSTM",
+    title: "CNN-LSTM - 混合模型",
     description: "卷积神经网络+LSTM混合模型",
     type: "Hybrid",
-    complexity: "high",
-    selected: false
+    complexity: "high"
   },
   {
     id: 6,
     name: "Random Forest",
+    title: "Random Forest - 随机森林",
     description: "随机森林集成学习",
     type: "Ensemble",
-    complexity: "medium",
-    selected: false
+    complexity: "medium"
   }
 ]);
 
-// 训练状态管理
-const completedModelIds = ref(new Set<number>());
-const modelResults = ref<{
-  id: number;
-  name: string;
-  type: string;
-  accuracy: number;
-  finalLoss: number;
-  trainingTime: number;
-  status: "completed" | "training" | "failed";
-}[]>([]);
+// 选中的模型ID数组
+const selectedModelIds = ref<number[]>([1, 3]);
+
+// 移除模型方法
+const removeModel = (modelId: number) => {
+  const index = selectedModelIds.value.indexOf(modelId);
+  if (index > -1) {
+    selectedModelIds.value.splice(index, 1);
+  }
+};
 
 // 计算属性
 const selectedFeatureMethods = computed(() =>
@@ -409,7 +377,7 @@ const selectedFeatureMethods = computed(() =>
 );
 
 const selectedAiModels = computed(() =>
-  aiModels.value.filter(model => model.selected)
+  aiModels.value.filter(model => selectedModelIds.value.includes(model.id))
 );
 
 const estimatedTrainingTime = computed(() => {
@@ -418,15 +386,6 @@ const estimatedTrainingTime = computed(() => {
   const modelTime = selectedAiModels.value.length * 10;
   return baseTime + featureTime + modelTime;
 });
-
-const completedModels = computed(() => completedModelIds.value.size);
-
-const overallProgress = computed(() => {
-  if (selectedAiModels.value.length === 0) return 0;
-  return (completedModels.value / selectedAiModels.value.length) * 100;
-});
-
-const isAnyTraining = ref(false);
 
 // 获取模型类型颜色
 const getModelTypeColor = (type: string) => {
@@ -463,57 +422,18 @@ const loadParamFile = async () => {
   }
 };
 
-import { nextTick } from "vue";
-const modelTrainerRefs = ref<(InstanceType<typeof ModelTrainer> | null)[]>([]);
-
-const startAllTraining = async () => {
-  isAnyTraining.value = true;
-  // 重置训练结果
-  completedModelIds.value.clear();
-  modelResults.value = [];
-  // 触发所有模型组件开始训练
-  await nextTick();
-  console.log(modelTrainerRefs.value);
-  modelTrainerRefs.value.forEach(refItem => {
-    if (refItem && typeof refItem.startTraining === "function") {
-      refItem.startTraining();
+const startTraining = () => {
+  // 这里可以启动训练任务，然后跳转到监控页面
+  // 可以将选中的模型信息传递给监控页面
+  router.push({
+    path: "/monitor",
+    query: {
+      models: JSON.stringify(selectedModelIds.value)
     }
   });
 };
 
-const stopAllTraining = () => {
-  isAnyTraining.value = false;
-  // 这里可以触发所有模型组件停止训练
+const goToMonitor = () => {
+  router.push("/monitor");
 };
-
-const onModelCompleted = (modelId: number) => {
-  completedModelIds.value.add(modelId);
-
-  // 找到对应的模型信息
-  const model = selectedAiModels.value.find(m => m.id === modelId);
-  if (model) {
-    // 生成模拟的训练结果
-    const result = {
-      id: modelId,
-      name: model.name,
-      type: model.type,
-      accuracy: 75 + Math.random() * 20, // 75-95% 的准确率
-      finalLoss: 0.01 + Math.random() * 0.1, // 0.01-0.11 的最终损失
-      trainingTime: Math.floor(5 + Math.random() * 15), // 5-20分钟的训练时间
-      status: "completed" as const
-    };
-
-    modelResults.value.push(result);
-  }
-
-  // 检查是否所有模型都完成了训练
-  if (completedModels.value === selectedAiModels.value.length) {
-    isAnyTraining.value = false;
-  }
-};
-
-// 组件卸载时清理
-onUnmounted(() => {
-  // 清理工作
-});
 </script>
