@@ -55,9 +55,9 @@ const openDrawer = () => {
 };
 
 // 处理登录成功
-const handleLoginSuccess = (user: { username: string; role: string }) => {
+const handleLoginSuccess = (user: { username: string; role: "administrator" | "researcher" | "user" }) => {
   console.log("App received login success event:", user); // 调试日志
-  login(user as any);
+  login(user);
 };
 
 // 处理登出
@@ -135,6 +135,28 @@ const getRoleDisplayName = (role?: string) => {
                 </v-list-item>
               </template>
             </v-tooltip>
+            <v-tooltip text="管理数据集和训练任务">
+              <template v-slot:activator="{ props }">
+                <v-list-item title="数据集管理" value="datasets" rounded="xl" v-bind="props">
+                  <template #prepend>
+                    <v-icon>
+                      <Icon icon="material-symbols:database" />
+                    </v-icon>
+                  </template>
+                </v-list-item>
+              </template>
+            </v-tooltip>
+            <v-tooltip text="管理员控制台" v-if="currentUser?.role === 'administrator'">
+              <template v-slot:activator="{ props }">
+                <v-list-item title="管理员控制台" value="admin" rounded="xl" v-bind="props">
+                  <template #prepend>
+                    <v-icon>
+                      <Icon icon="mdi-shield-account" />
+                    </v-icon>
+                  </template>
+                </v-list-item>
+              </template>
+            </v-tooltip>
             <v-tooltip text="上传原始数据文件">
               <template v-slot:activator="{ props }">
                 <v-list-item title="数据上传" value="data" rounded="xl" v-bind="props">
@@ -185,17 +207,6 @@ const getRoleDisplayName = (role?: string) => {
                   <template #prepend>
                     <v-icon>
                       <Icon icon="material-symbols:text-compare-rounded" />
-                    </v-icon>
-                  </template>
-                </v-list-item>
-              </template>
-            </v-tooltip>
-            <v-tooltip text="使用模型进行预测">
-              <template v-slot:activator="{ props }">
-                <v-list-item title="预测" value="predict" rounded="xl" v-bind="props">
-                  <template #prepend>
-                    <v-icon>
-                      <Icon icon="octicon:ai-model-16" />
                     </v-icon>
                   </template>
                 </v-list-item>

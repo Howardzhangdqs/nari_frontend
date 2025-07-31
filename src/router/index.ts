@@ -6,7 +6,8 @@ import DataView from "../views/DataView.vue";
 import TrainView from "../views/TrainView.vue";
 import MonitorView from "../views/MonitorView.vue";
 import ModelManageView from "../views/ModelManageView.vue";
-import PredictView from "../views/PredictView.vue";
+import DatasetManageView from "../views/DatasetManageView.vue";
+import AdminView from "../views/AdminView.vue";
 
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),
@@ -47,9 +48,14 @@ const router = createRouter({
       component: ModelManageView,
     },
     {
-      path: "/predict",
-      name: "predict",
-      component: PredictView,
+      path: "/datasets",
+      name: "datasets",
+      component: DatasetManageView,
+    },
+    {
+      path: "/admin",
+      name: "admin",
+      component: AdminView,
     },
   ],
 });

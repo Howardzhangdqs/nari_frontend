@@ -94,7 +94,7 @@ const loginFormRef = ref();
 
 // 发送登录成功事件
 const emit = defineEmits<{
-  loginSuccess: [user: { username: string; role: string }]
+  loginSuccess: [user: { username: string; role: "administrator" | "researcher" | "user" }]
 }>();
 
 // 处理登录
@@ -125,9 +125,9 @@ const handleLogin = async () => {
 
     // 简单的用户验证逻辑
     const validUsers = [
-      { username: "admin", password: "admin123", role: "administrator" },
-      { username: "user", password: "user123", role: "user" },
-      { username: "researcher", password: "research123", role: "researcher" }
+      { username: "admin", password: "admin123", role: "administrator" as const },
+      { username: "user", password: "user123", role: "user" as const },
+      { username: "researcher", password: "research123", role: "researcher" as const }
     ];
 
     const user = validUsers.find(u =>

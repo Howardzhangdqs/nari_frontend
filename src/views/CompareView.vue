@@ -797,9 +797,9 @@ const initializeCharts = () => {
       title: { text: "预测值与实际值对比", left: "center" },
       tooltip: {
         trigger: "axis",
-        formatter: function (params: any[]) {
+        formatter: function (params: { dataIndex: number; seriesName: string; value: number }[]) {
           let result = `时间点 ${params[0].dataIndex + 1}<br/>`;
-          params.forEach((param: any) => {
+          params.forEach((param: { seriesName: string; value: number }) => {
             result += `${param.seriesName}: ${param.value.toFixed(2)}<br/>`;
           });
           return result;
