@@ -2,7 +2,7 @@
   <v-container fluid>
     <v-row>
       <v-col cols="12">
-        <v-card>
+        <v-card variant="text">
           <v-card-title class="d-flex justify-space-between align-center">
             <div>
               <v-icon class="mr-2">mdi-database</v-icon>
@@ -39,31 +39,6 @@
             <v-data-table :headers="headers" :items="filteredDatasets" :loading="loading"
               :sort-by="[{ key: sortBy, order: 'desc' }]" class="elevation-1 dataset-table">
 
-              <template v-slot:[`header.trainingStatus`]>
-                <div class="text-center">训练状态</div>
-              </template>
-
-              <template v-slot:[`header.recordCount`]>
-                <div class="text-center">记录数</div>
-              </template>
-
-              <template v-slot:[`header.createdAt`]>
-                <div class="text-center">创建时间</div>
-              </template>
-
-              <template v-slot:[`header.trainingStartedAt`]>
-                <div class="text-center">训练开始时间</div>
-              </template>
-
-              <template v-slot:[`header.completedAt`]>
-                <div class="text-center">完成时间</div>
-              </template>
-
-              <template v-slot:[`header.actions`]>
-                <div class="text-end">操作</div>
-              </template>
-
-
               <!-- 数据集名称 -->
               <template v-slot:[`item.name`]="{ item }">
                 <div class="d-flex align-center">
@@ -77,12 +52,15 @@
                 </div>
               </template>
 
-              <!-- 训练状态 -->
-              <template v-slot:[`item.trainingStatus`]="{ item }">
-                <v-chip :color="getStatusColor(item.trainingStatus)"
-                  :variant="item.trainingStatus === 'completed' ? 'flat' : 'outlined'" size="small">
-                  <v-icon start :icon="getStatusIcon(item.trainingStatus)"></v-icon>
-                  {{ getStatusText(item.trainingStatus) }}
+              <!-- 数据基础信息 -->
+              <template v-slot:[`item.dataInfo`]="{ item }">
+                <div class="text-body-2">{{ item.dataInfo }}</div>
+              </template>
+
+              <!-- 数据条数 -->
+              <template v-slot:[`item.recordCount`]="{ item }">
+                <v-chip size="small" color="info" variant="outlined">
+                  {{ item.recordCount.toLocaleString() }} 条
                 </v-chip>
               </template>
 
@@ -96,72 +74,52 @@
                 </div>
               </template>
 
-              <!-- 训练开始时间 -->
-              <template v-slot:[`item.trainingStartedAt`]="{ item }">
-                <div v-if="item.trainingStartedAt">
-                  <div>{{ formatDate(item.trainingStartedAt) }}</div>
-                  <div class="text-caption text-medium-emphasis">
-                    {{ formatTime(item.trainingStartedAt) }}
-                  </div>
-                </div>
-                <div v-else class="text-medium-emphasis">未开始</div>
+              <!-- 更新次数 -->
+              <template v-slot:[`item.updateCount`]="{ item }">
+                <v-chip size="small" :color="item.updateCount > 0 ? 'success' : 'default'" variant="outlined">
+                  {{ item.updateCount }} 次
+                </v-chip>
               </template>
 
-              <!-- 完成时间 -->
-              <template v-slot:[`item.completedAt`]="{ item }">
-                <div v-if="item.completedAt">
-                  <div>{{ formatDate(item.completedAt) }}</div>
-                  <div class="text-caption text-medium-emphasis">
-                    {{ formatTime(item.completedAt) }}
-                  </div>
+              <!-- 创建人 -->
+              <template v-slot:[`item.creator`]="{ item }">
+                <div class="d-flex align-center">
+                  <v-avatar size="24" color="primary" class="mr-2">
+                    <v-icon size="14">mdi-account</v-icon>
+                  </v-avatar>
+                  {{ item.creator }}
                 </div>
-                <div v-else class="text-medium-emphasis">未完成</div>
               </template>
 
               <!-- 操作列 -->
               <template v-slot:[`item.actions`]="{ item }">
-                <div class="d-flex gap-2 justify-end align-end">
-                  <!-- 查看训练进度 -->
-                  <v-btn v-if="item.trainingStatus === 'training' || item.trainingStatus === 'completed'" size="small"
-                    variant="text" color="primary" icon="mdi-chart-line" @click="viewTrainingProgress(item)">
-                    <v-tooltip activator="parent">查看训练进度</v-tooltip>
-                    <v-icon>mdi-chart-line</v-icon>
-                  </v-btn>
-
-                  <!-- 模型对比 -->
-                  <v-btn v-if="item.trainingStatus === 'completed'" size="small" variant="text" color="success"
-                    icon="mdi-compare" @click="viewModelComparison(item)">
-                    <v-tooltip activator="parent">模型对比</v-tooltip>
-                    <v-icon>mdi-compare</v-icon>
-                  </v-btn>
-
-                  <!-- 开始训练 -->
-                  <v-btn v-if="item.trainingStatus === 'pending'" size="small" variant="text" color="primary"
-                    icon="solar:play-bold" @click="startTraining(item)">
-                    <v-tooltip activator="parent">开始训练</v-tooltip>
-                    <v-icon>
-                      <Icon icon="solar:play-bold" />
-                    </v-icon>
+                <div class="d-flex gap-2">
+                  <!-- 新增按钮（仅在数据集行中显示） -->
+                  <v-btn size="small" variant="text" color="primary" icon @click="addDataset">
+                    <v-tooltip activator="parent">新增数据集</v-tooltip>
+                    <v-icon>mdi-plus</v-icon>
                   </v-btn>
 
                   <!-- 更多操作 -->
                   <v-menu>
                     <template v-slot:activator="{ props }">
-                      <v-btn size="small" variant="text" v-bind="props" icon="mdi-dots-vertical">
+                      <v-btn size="small" variant="text" v-bind="props" icon>
+                        <v-tooltip activator="parent">更多操作</v-tooltip>
+                        <v-icon>mdi-dots-vertical</v-icon>
                       </v-btn>
                     </template>
                     <v-list>
+                      <v-list-item @click="updateDataset(item)">
+                        <template v-slot:prepend>
+                          <v-icon>mdi-refresh</v-icon>
+                        </template>
+                        <v-list-item-title>更新</v-list-item-title>
+                      </v-list-item>
                       <v-list-item @click="editDataset(item)">
                         <template v-slot:prepend>
                           <v-icon>mdi-pencil</v-icon>
                         </template>
                         <v-list-item-title>编辑</v-list-item-title>
-                      </v-list-item>
-                      <v-list-item @click="downloadDataset(item)">
-                        <template v-slot:prepend>
-                          <v-icon>mdi-download</v-icon>
-                        </template>
-                        <v-list-item-title>下载</v-list-item-title>
                       </v-list-item>
                       <v-divider></v-divider>
                       <v-list-item @click="deleteDataset(item)" class="text-error">
@@ -185,15 +143,21 @@
       <v-card>
         <v-card-title>
           <v-icon class="mr-2">mdi-upload</v-icon>
-          上传新数据集
+          新增数据集
         </v-card-title>
         <v-card-text>
           <v-form ref="uploadForm" v-model="uploadFormValid">
             <v-text-field v-model="newDataset.name" label="数据集名称" :rules="[rules.required]" variant="outlined"
               class="mb-3"></v-text-field>
 
-            <v-textarea v-model="newDataset.description" label="数据集描述" variant="outlined" rows="3"
+            <v-textarea v-model="newDataset.description" label="数据集描述" variant="outlined" rows="2"
               class="mb-3"></v-textarea>
+
+            <v-text-field v-model="newDataset.dataInfo" label="数据基础信息" :rules="[rules.required]" variant="outlined"
+              placeholder="如：时序数据，包含负荷、温度、湿度等特征" class="mb-3"></v-text-field>
+
+            <v-text-field v-model="newDataset.creator" label="创建人" :rules="[rules.required]" variant="outlined"
+              class="mb-3"></v-text-field>
 
             <v-file-input v-model="newDataset.file" label="选择数据文件" accept=".csv,.xlsx,.json" :rules="[rules.required]"
               variant="outlined" show-size class="mb-3"></v-file-input>
@@ -202,8 +166,101 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn @click="showUploadDialog = false">取消</v-btn>
-          <v-btn color="primary" :disabled="!uploadFormValid" @click="uploadDataset" :loading="uploading">
-            上传
+          <v-btn color="primary" :disabled="!uploadFormValid" @click="proceedToUpload" :loading="uploading">
+            数据上传
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- 数据集上传弹窗 -->
+    <v-dialog v-model="showDataUploadDialog" max-width="800px">
+      <v-card>
+        <v-card-title>
+          <v-icon class="mr-2">mdi-cloud-upload</v-icon>
+          数据集上传
+        </v-card-title>
+        <v-card-text>
+          <v-stepper v-model="uploadStep" alt-labels>
+            <v-stepper-header>
+              <v-stepper-item title="文件导入" value="1"></v-stepper-item>
+              <v-divider></v-divider>
+              <v-stepper-item title="数据库配置" value="2"></v-stepper-item>
+            </v-stepper-header>
+
+            <v-stepper-window>
+              <v-stepper-window-item value="1">
+                <v-card flat>
+                  <v-card-text>
+                    <div class="text-h6 mb-4">文件导入设置</div>
+                    <v-row>
+                      <v-col cols="12" md="6">
+                        <v-select v-model="uploadConfig.fileFormat" :items="fileFormatOptions" label="文件格式"
+                          variant="outlined"></v-select>
+                      </v-col>
+                      <v-col cols="12" md="6">
+                        <v-select v-model="uploadConfig.encoding" :items="encodingOptions" label="文件编码"
+                          variant="outlined"></v-select>
+                      </v-col>
+                      <v-col cols="12" md="6">
+                        <v-text-field v-model="uploadConfig.separator" label="分隔符" variant="outlined"
+                          placeholder="如: ,"></v-text-field>
+                      </v-col>
+                      <v-col cols="12" md="6">
+                        <v-checkbox v-model="uploadConfig.hasHeader" label="包含表头"></v-checkbox>
+                      </v-col>
+                    </v-row>
+                  </v-card-text>
+                </v-card>
+              </v-stepper-window-item>
+
+              <v-stepper-window-item value="2">
+                <v-card flat>
+                  <v-card-text>
+                    <div class="text-h6 mb-4">数据库配置</div>
+                    <v-row>
+                      <v-col cols="12" md="6">
+                        <v-text-field v-model="uploadConfig.tableName" label="表名" variant="outlined"
+                          :rules="[rules.required]"></v-text-field>
+                      </v-col>
+                      <v-col cols="12" md="6">
+                        <v-select v-model="uploadConfig.database" :items="databaseOptions" label="目标数据库"
+                          variant="outlined"></v-select>
+                      </v-col>
+                      <v-col cols="12">
+                        <v-textarea v-model="uploadConfig.description" label="数据表描述" variant="outlined"
+                          rows="2"></v-textarea>
+                      </v-col>
+                    </v-row>
+                  </v-card-text>
+                </v-card>
+              </v-stepper-window-item>
+            </v-stepper-window>
+          </v-stepper>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn @click="showDataUploadDialog = false">取消</v-btn>
+          <v-btn v-if="uploadStep < 2" @click="uploadStep++" color="primary">下一步</v-btn>
+          <v-btn v-else @click="finalizeUpload" color="primary" :loading="uploading">
+            完成上传
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- 删除确认对话框 -->
+    <v-dialog v-model="showDeleteDialog" max-width="400px">
+      <v-card>
+        <v-card-title class="text-h6">确认删除</v-card-title>
+        <v-card-text>
+          确定要删除数据集 "{{ datasetToDelete?.name }}" 吗？此操作不可撤销。
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn @click="showDeleteDialog = false">取消</v-btn>
+          <v-btn color="error" @click="confirmDelete" :loading="deleting">
+            删除
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -220,12 +277,15 @@ interface Dataset {
   id: string
   name: string
   description?: string
-  trainingStatus: "pending" | "training" | "completed" | "failed"
+  dataInfo: string
+  recordCount: number
   createdAt: string
+  updateCount: number
+  creator: string
+  trainingStatus: "pending" | "training" | "completed" | "failed"
   trainingStartedAt?: string
   completedAt?: string
   fileSize: number
-  recordCount: number
 }
 
 const router = useRouter();
@@ -233,22 +293,27 @@ const router = useRouter();
 // 响应式数据
 const loading = ref(false);
 const showUploadDialog = ref(false);
+const showDataUploadDialog = ref(false);
+const showDeleteDialog = ref(false);
 const uploading = ref(false);
+const deleting = ref(false);
 const uploadFormValid = ref(false);
 const searchKeyword = ref("");
 const statusFilter = ref("");
 const sortBy = ref("createdAt");
+const uploadStep = ref(1);
+const datasetToDelete = ref<Dataset | null>(null);
 
 type HeaderAlign = "center" | "end" | "start" | undefined;
 
 // 表格列定义
 const headers = [
   { title: "数据集名称", key: "name", sortable: true },
-  { title: "训练状态", key: "trainingStatus", sortable: true, align: "center" as HeaderAlign },
-  { title: "记录数", key: "recordCount", sortable: true, align: "center" as HeaderAlign },
+  { title: "数据基础信息", key: "dataInfo", sortable: false },
+  { title: "数据条数", key: "recordCount", sortable: true, align: "center" as HeaderAlign },
   { title: "创建时间", key: "createdAt", sortable: true, align: "center" as HeaderAlign },
-  { title: "训练开始时间", key: "trainingStartedAt", sortable: true, align: "center" as HeaderAlign },
-  { title: "完成时间", key: "completedAt", sortable: true, align: "center" as HeaderAlign },
+  { title: "更新次数", key: "updateCount", sortable: true, align: "center" as HeaderAlign },
+  { title: "创建人", key: "creator", sortable: true, align: "center" as HeaderAlign },
   { title: "操作", key: "actions", sortable: false, width: 200, align: "end" as HeaderAlign }
 ];
 
@@ -273,41 +338,53 @@ const datasets = ref<Dataset[]>([
     id: "1",
     name: "电力负荷数据集-01",
     description: "2023年全年电力负荷数据，包含温度、湿度等特征",
-    trainingStatus: "completed",
+    dataInfo: "时序数据，包含负荷、温度、湿度、风速等15个特征",
+    recordCount: 8760,
     createdAt: "2024-01-15T09:30:00Z",
+    updateCount: 3,
+    creator: "张工程师",
+    trainingStatus: "completed",
     trainingStartedAt: "2024-01-15T10:00:00Z",
     completedAt: "2024-01-15T14:30:00Z",
-    fileSize: 25600000,
-    recordCount: 8760
+    fileSize: 25600000
   },
   {
     id: "2",
     name: "风力发电数据集-02",
     description: "某风电场2023年发电功率数据",
-    trainingStatus: "training",
+    dataInfo: "风电功率数据，包含风速、风向、气压等12个特征",
+    recordCount: 5256,
     createdAt: "2024-01-20T14:15:00Z",
+    updateCount: 1,
+    creator: "李研究员",
+    trainingStatus: "training",
     trainingStartedAt: "2024-01-20T15:00:00Z",
-    fileSize: 15800000,
-    recordCount: 5256
+    fileSize: 15800000
   },
   {
     id: "3",
     name: "太阳能发电数据集-03",
     description: "光伏电站发电功率及气象数据",
-    trainingStatus: "pending",
+    dataInfo: "光伏发电数据，包含辐照度、温度、云量等10个特征",
+    recordCount: 12045,
     createdAt: "2024-01-25T11:20:00Z",
-    fileSize: 32100000,
-    recordCount: 12045
+    updateCount: 0,
+    creator: "王分析师",
+    trainingStatus: "pending",
+    fileSize: 32100000
   },
   {
     id: "4",
     name: "区域负荷数据集-04",
     description: "某地区用电负荷及经济指标数据",
-    trainingStatus: "failed",
+    dataInfo: "区域负荷数据，包含用电量、GDP、人口等8个特征",
+    recordCount: 6570,
     createdAt: "2024-01-18T16:45:00Z",
+    updateCount: 2,
+    creator: "赵专家",
+    trainingStatus: "failed",
     trainingStartedAt: "2024-01-18T17:00:00Z",
-    fileSize: 18900000,
-    recordCount: 6570
+    fileSize: 18900000
   }
 ]);
 
@@ -315,8 +392,40 @@ const datasets = ref<Dataset[]>([
 const newDataset = ref({
   name: "",
   description: "",
+  dataInfo: "",
+  creator: "",
   file: [] as File[]
 });
+
+// 上传配置
+const uploadConfig = ref({
+  fileFormat: "csv",
+  encoding: "utf-8",
+  separator: ",",
+  hasHeader: true,
+  tableName: "",
+  database: "timeseries_db",
+  description: ""
+});
+
+// 配置选项
+const fileFormatOptions = [
+  { title: "CSV", value: "csv" },
+  { title: "Excel", value: "xlsx" },
+  { title: "JSON", value: "json" }
+];
+
+const encodingOptions = [
+  { title: "UTF-8", value: "utf-8" },
+  { title: "GBK", value: "gbk" },
+  { title: "ASCII", value: "ascii" }
+];
+
+const databaseOptions = [
+  { title: "时序数据库", value: "timeseries_db" },
+  { title: "分析数据库", value: "analytics_db" },
+  { title: "历史数据库", value: "historical_db" }
+];
 
 // 表单验证规则
 const rules = {
@@ -387,71 +496,114 @@ const formatTime = (dateString: string) => {
 
 const refreshData = () => {
   loading.value = true;
-  // 模拟刷新
   setTimeout(() => {
     loading.value = false;
   }, 1000);
 };
 
-const viewTrainingProgress = (dataset: Dataset) => {
-  // 跳转到训练监控页面
-  router.push({ name: "monitor", query: { datasetId: dataset.id } });
+const addDataset = () => {
+  showUploadDialog.value = true;
 };
 
-const viewModelComparison = (dataset: Dataset) => {
-  // 跳转到模型对比页面
-  router.push({ name: "compare", query: { datasetId: dataset.id } });
-};
-
-const startTraining = (dataset: Dataset) => {
-  // 跳转到训练配置页面
-  router.push({ name: "train", query: { datasetId: dataset.id } });
-};
-
-const editDataset = (dataset: Dataset) => {
-  console.log("编辑数据集:", dataset);
-  // 实现编辑功能
-};
-
-const downloadDataset = (dataset: Dataset) => {
-  console.log("下载数据集:", dataset);
-  // 实现下载功能
-};
-
-const deleteDataset = (dataset: Dataset) => {
-  console.log("删除数据集:", dataset);
-  // 实现删除功能
-};
-
-const uploadDataset = async () => {
+const proceedToUpload = () => {
   if (!uploadFormValid.value) return;
 
+  // 添加新数据集到列表（待编辑状态）
+  const newId = (datasets.value.length + 1).toString();
+  const now = new Date().toISOString();
+
+  datasets.value.unshift({
+    id: newId,
+    name: newDataset.value.name,
+    description: newDataset.value.description,
+    dataInfo: newDataset.value.dataInfo,
+    recordCount: 0, // 待上传确定
+    createdAt: now,
+    updateCount: 0,
+    creator: newDataset.value.creator,
+    trainingStatus: "pending",
+    fileSize: newDataset.value.file[0]?.size || 0
+  });
+
+  // 关闭第一个弹窗，打开上传弹窗
+  showUploadDialog.value = false;
+  showDataUploadDialog.value = true;
+  uploadStep.value = 1;
+};
+
+const finalizeUpload = async () => {
   uploading.value = true;
   try {
-    // 模拟上传过程
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve, 3000));
 
-    // 添加新数据集到列表
-    const newId = (datasets.value.length + 1).toString();
-    datasets.value.unshift({
-      id: newId,
-      name: newDataset.value.name,
-      description: newDataset.value.description,
-      trainingStatus: "pending",
-      createdAt: new Date().toISOString(),
-      fileSize: newDataset.value.file[0]?.size || 0,
-      recordCount: Math.floor(Math.random() * 10000) + 1000
-    });
+    // 更新最新添加的数据集记录数
+    if (datasets.value.length > 0) {
+      datasets.value[0].recordCount = Math.floor(Math.random() * 10000) + 1000;
+    }
 
     // 重置表单
     newDataset.value = {
       name: "",
       description: "",
+      dataInfo: "",
+      creator: "",
       file: []
     };
-    showUploadDialog.value = false;
+
+    uploadConfig.value = {
+      fileFormat: "csv",
+      encoding: "utf-8",
+      separator: ",",
+      hasHeader: true,
+      tableName: "",
+      database: "timeseries_db",
+      description: ""
+    };
+
+    showDataUploadDialog.value = false;
   } finally {
     uploading.value = false;
+  }
+};
+
+const updateDataset = (dataset: Dataset) => {
+  // 跳转到数据上传页面进行更新
+  router.push({ name: "data", query: { datasetId: dataset.id, mode: "update" } });
+};
+
+const editDataset = (dataset: Dataset) => {
+  // 打开编辑弹窗，预填充数据
+  newDataset.value = {
+    name: dataset.name,
+    description: dataset.description || "",
+    dataInfo: dataset.dataInfo,
+    creator: dataset.creator,
+    file: []
+  };
+  showUploadDialog.value = true;
+};
+
+const deleteDataset = (dataset: Dataset) => {
+  datasetToDelete.value = dataset;
+  showDeleteDialog.value = true;
+};
+
+const confirmDelete = async () => {
+  if (!datasetToDelete.value) return;
+
+  deleting.value = true;
+  try {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    const index = datasets.value.findIndex(d => d.id === datasetToDelete.value!.id);
+    if (index !== -1) {
+      datasets.value.splice(index, 1);
+    }
+
+    showDeleteDialog.value = false;
+    datasetToDelete.value = null;
+  } finally {
+    deleting.value = false;
   }
 };
 

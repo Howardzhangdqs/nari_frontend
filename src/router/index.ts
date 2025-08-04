@@ -53,6 +53,11 @@ const router = createRouter({
       component: DatasetManageView,
     },
     {
+      path: "/tasks",
+      name: "tasks",
+      component: () => import("../views/TaskManageView.vue"),
+    },
+    {
       path: "/admin",
       name: "admin",
       component: AdminView,

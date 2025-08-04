@@ -112,9 +112,13 @@ const getRoleDisplayName = (role?: string) => {
             <v-list-item-subtitle class="text-caption">{{ getRoleDisplayName(currentUser?.role)
             }}</v-list-item-subtitle>
             <template v-slot:append>
-              <v-btn icon size="small" @click="handleLogout" variant="text">
-                <v-icon size="20">mdi-logout</v-icon>
+              <v-btn v-if="currentUser?.role === 'administrator'" size="small" @click="router.push('/admin')" variant="text" icon class="mr-1">
+                <v-tooltip activator="parent" text="管理员控制台"></v-tooltip>
+                <v-icon size="20">mdi-shield-account</v-icon>
+              </v-btn>
+              <v-btn size="small" @click="handleLogout" variant="text" icon>
                 <v-tooltip activator="parent" text="退出登录"></v-tooltip>
+                <v-icon size="20">mdi-logout</v-icon>
               </v-btn>
             </template>
           </v-list-item>
@@ -124,7 +128,7 @@ const getRoleDisplayName = (role?: string) => {
 
         <v-container>
           <v-list color="primary" v-model:selected="section_selected">
-            <v-tooltip text="系统总览、服务状态、训练摘要等">
+            <v-tooltip text="模型概况和任务概况">
               <template v-slot:activator="{ props }">
                 <v-list-item title="首页" value="home" rounded="xl" v-bind="props">
                   <template #prepend>
@@ -135,7 +139,7 @@ const getRoleDisplayName = (role?: string) => {
                 </v-list-item>
               </template>
             </v-tooltip>
-            <v-tooltip text="管理数据集和训练任务">
+            <v-tooltip text="数据集信息展示、新增、编辑和删除">
               <template v-slot:activator="{ props }">
                 <v-list-item title="数据集管理" value="datasets" rounded="xl" v-bind="props">
                   <template #prepend>
@@ -146,67 +150,23 @@ const getRoleDisplayName = (role?: string) => {
                 </v-list-item>
               </template>
             </v-tooltip>
-            <v-tooltip text="管理员控制台" v-if="currentUser?.role === 'administrator'">
+            <v-tooltip text="任务管理、创建和监控">
               <template v-slot:activator="{ props }">
-                <v-list-item title="管理员控制台" value="admin" rounded="xl" v-bind="props">
+                <v-list-item title="任务管理" value="tasks" rounded="xl" v-bind="props">
                   <template #prepend>
                     <v-icon>
-                      <Icon icon="mdi-shield-account" />
+                      <Icon icon="mdi-clipboard-list" />
                     </v-icon>
                   </template>
                 </v-list-item>
               </template>
             </v-tooltip>
-            <v-tooltip text="上传原始数据文件">
-              <template v-slot:activator="{ props }">
-                <v-list-item title="数据上传" value="data" rounded="xl" v-bind="props">
-                  <template #prepend>
-                    <v-icon>
-                      <Icon icon="majesticons:data-line" />
-                    </v-icon>
-                  </template>
-                </v-list-item>
-              </template>
-            </v-tooltip>
-            <v-tooltip text="配置并训练模型">
-              <template v-slot:activator="{ props }">
-                <v-list-item title="模型训练" value="train" rounded="xl" v-bind="props">
-                  <template #prepend>
-                    <v-icon>
-                      <Icon icon="humbleicons:ai" />
-                    </v-icon>
-                  </template>
-                </v-list-item>
-              </template>
-            </v-tooltip>
-            <v-tooltip text="监控训练任务进度">
-              <template v-slot:activator="{ props }">
-                <v-list-item title="训练监控" value="monitor" rounded="xl" v-bind="props">
-                  <template #prepend>
-                    <v-icon>
-                      <Icon icon="material-symbols:monitor-heart-outline" />
-                    </v-icon>
-                  </template>
-                </v-list-item>
-              </template>
-            </v-tooltip>
-            <v-tooltip text="管理和配置模型">
+            <v-tooltip text="模型信息展示和管理">
               <template v-slot:activator="{ props }">
                 <v-list-item title="模型管理" value="models" rounded="xl" v-bind="props">
                   <template #prepend>
                     <v-icon>
-                      <Icon icon="mdi-cog-outline" />
-                    </v-icon>
-                  </template>
-                </v-list-item>
-              </template>
-            </v-tooltip>
-            <v-tooltip text="对比不同模型效果">
-              <template v-slot:activator="{ props }">
-                <v-list-item title="模型对比" value="compare" rounded="xl" v-bind="props">
-                  <template #prepend>
-                    <v-icon>
-                      <Icon icon="material-symbols:text-compare-rounded" />
+                      <Icon icon="mdi-brain" />
                     </v-icon>
                   </template>
                 </v-list-item>
@@ -228,7 +188,8 @@ const getRoleDisplayName = (role?: string) => {
     </v-layout>
 
     <v-fab-transition>
-      <v-btn class="float-button" color="primary" fab @click="openDrawer" icon="mdi-menu" v-show="showFloatButton">
+      <v-btn class="float-button" color="primary" fab @click="openDrawer" v-show="showFloatButton" icon>
+        <v-icon>mdi-menu</v-icon>
       </v-btn>
     </v-fab-transition>
   </div>

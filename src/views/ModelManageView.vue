@@ -54,10 +54,9 @@
                 </v-chip>
               </template>
 
-              <template v-slot:[`item.complexity`]="{ item }">
-                <v-chip size="small"
-                  :color="item.complexity === 'high' ? 'orange' : item.complexity === 'medium' ? 'yellow' : 'green'">
-                  {{ getComplexityText(item.complexity) }}
+              <template v-slot:[`item.usageCount`]="{ item }">
+                <v-chip size="small" color="primary" variant="outlined">
+                  {{ item.usageCount }} 次
                 </v-chip>
               </template>
 
@@ -74,18 +73,22 @@
 
               <template v-slot:[`item.actions`]="{ item }">
                 <div class="d-flex gap-1">
-                  <v-btn icon="mdi-pencil" size="small" variant="text" color="primary" @click="editModel(item)">
+                  <v-btn size="small" variant="text" color="primary" icon @click="editModel(item)">
                     <v-tooltip activator="parent" text="编辑"></v-tooltip>
+                    <v-icon>mdi-pencil</v-icon>
                   </v-btn>
-                  <v-btn icon="mdi-eye" size="small" variant="text" color="info" @click="viewModel(item)">
+                  <v-btn size="small" variant="text" color="info" icon @click="viewModel(item)">
                     <v-tooltip activator="parent" text="查看详情"></v-tooltip>
+                    <v-icon>mdi-eye</v-icon>
                   </v-btn>
-                  <v-btn icon="mdi-download" size="small" variant="text" color="success" @click="exportModel(item)">
+                  <v-btn size="small" variant="text" color="success" icon @click="exportModel(item)">
                     <v-tooltip activator="parent" text="导出"></v-tooltip>
+                    <v-icon>mdi-download</v-icon>
                   </v-btn>
-                  <v-btn icon="mdi-delete" size="small" variant="text" color="error" @click="confirmDelete(item)"
+                  <v-btn size="small" variant="text" color="error" icon @click="confirmDelete(item)"
                     :disabled="item.status === 'training'">
                     <v-tooltip activator="parent" text="删除"></v-tooltip>
+                    <v-icon>mdi-delete</v-icon>
                   </v-btn>
                 </div>
               </template>
@@ -238,6 +241,7 @@ interface Model {
   version?: string;
   parameters?: string;
   status: "active" | "training" | "inactive";
+  usageCount: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -278,52 +282,83 @@ const models = ref<Model[]>([
   {
     id: "1",
     name: "LSTM时序预测模型",
-    description: "长短期记忆网络，适合时间序列预测任务",
+    description: "长短期记忆网络，适合时间序列预测任务，能够处理长序列依赖关系",
     type: "RNN",
     complexity: "medium",
     framework: "PyTorch",
     version: "1.0.0",
     parameters: "{\"hidden_size\": 128, \"num_layers\": 2, \"dropout\": 0.2}",
     status: "active",
+    usageCount: 24,
     createdAt: new Date("2024-01-15"),
     updatedAt: new Date("2024-01-15")
   },
   {
     id: "2",
     name: "Transformer注意力模型",
-    description: "基于注意力机制的Transformer模型，处理长序列效果好",
+    description: "基于注意力机制的Transformer模型，处理长序列效果好，适用于复杂时序预测",
     type: "Attention",
     complexity: "high",
     framework: "TensorFlow",
     version: "2.1.0",
     parameters: "{\"d_model\": 512, \"nhead\": 8, \"num_layers\": 6}",
     status: "training",
+    usageCount: 18,
     createdAt: new Date("2024-01-20"),
     updatedAt: new Date("2024-01-22")
   },
   {
     id: "3",
     name: "RandomForest集成模型",
-    description: "随机森林集成学习算法，鲁棒性强",
+    description: "随机森林集成学习算法，鲁棒性强，适合处理非线性时序数据",
     type: "Ensemble",
     complexity: "low",
     framework: "Scikit-learn",
     version: "1.5.0",
     parameters: "{\"n_estimators\": 100, \"max_depth\": 10, \"random_state\": 42}",
     status: "active",
+    usageCount: 12,
     createdAt: new Date("2024-01-10"),
     updatedAt: new Date("2024-01-10")
+  },
+  {
+    id: "4",
+    name: "XGBoost梯度提升模型",
+    description: "梯度提升决策树算法，在时序预测任务中表现优异",
+    type: "Ensemble",
+    complexity: "medium",
+    framework: "XGBoost",
+    version: "1.7.0",
+    parameters: "{\"max_depth\": 6, \"learning_rate\": 0.1, \"n_estimators\": 200}",
+    status: "active",
+    usageCount: 15,
+    createdAt: new Date("2024-01-12"),
+    updatedAt: new Date("2024-01-12")
+  },
+  {
+    id: "5",
+    name: "GRU门控循环模型",
+    description: "门控循环单元，轻量级RNN变体，训练速度快",
+    type: "RNN",
+    complexity: "medium",
+    framework: "PyTorch",
+    version: "1.2.0",
+    parameters: "{\"hidden_size\": 64, \"num_layers\": 1, \"dropout\": 0.1}",
+    status: "active",
+    usageCount: 8,
+    createdAt: new Date("2024-01-18"),
+    updatedAt: new Date("2024-01-18")
   }
 ]);
 
 // 表格配置
 const headers = [
   { title: "模型名称", key: "name", sortable: true },
-  { title: "类型", key: "type", sortable: true },
-  { title: "复杂度", key: "complexity", sortable: true },
-  { title: "框架", key: "framework", sortable: true },
-  { title: "状态", key: "status", sortable: true },
+  { title: "模型类型", key: "type", sortable: true },
+  { title: "基本内容", key: "description", sortable: false },
   { title: "创建时间", key: "createdAt", sortable: true },
+  { title: "使用次数", key: "usageCount", sortable: true },
+  { title: "状态", key: "status", sortable: true },
   { title: "操作", key: "actions", sortable: false, width: 180 }
 ];
 
