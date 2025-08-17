@@ -56,7 +56,8 @@
                     <v-icon :color="getModelTypeColor(model.type)" class="mr-2">mdi-brain</v-icon>
                   </template>
                   <v-list-item-title>{{ model.name }}</v-list-item-title>
-                  <v-list-item-subtitle>{{ model.type }} - 使用 {{ model.usageCount }} 次</v-list-item-subtitle>
+                  <v-list-item-subtitle>{{ getModelDescription(model) }} - 已使用 {{ model.usageCount }}
+                    次</v-list-item-subtitle>
                   <template v-slot:append>
                     <v-chip size="small" :color="getModelTypeColor(model.type)">
                       {{ model.usageCount }}
@@ -140,13 +141,8 @@
                   </v-list-item-subtitle>
                   <template v-slot:append>
                     <div class="text-caption">{{ task.progress }}%</div>
-                    <v-progress-linear
-                      :model-value="task.progress"
-                      color="primary"
-                      height="4"
-                      class="ml-2"
-                      style="width: 80px;"
-                    ></v-progress-linear>
+                    <v-progress-linear :model-value="task.progress" color="primary" height="4" class="ml-2"
+                      style="width: 80px;"></v-progress-linear>
                   </template>
                 </v-list-item>
               </v-list>
@@ -212,10 +208,22 @@ const runningTasks = ref([
 const getModelTypeColor = (type: string) => {
   const colors: { [key: string]: string } = {
     "RNN": "blue",
-    "Attention": "purple", 
+    "Attention": "purple",
     "Hybrid": "orange",
     "Ensemble": "green"
   };
   return colors[type] || "grey";
+};
+
+// 将模型类型或模型对象映射为一句简短的中文关键信息（单句、简洁）
+const getModelDescription = (model: { name?: string; type?: string }) => {
+  const type = model.type || "";
+  const descMap: { [key: string]: string } = {
+    "RNN": "擅长时间序列建模",
+    "Attention": "擅长捕捉长距离依赖",
+    "Ensemble": "集成提升稳健性",
+    "Hybrid": "混合架构优势"
+  };
+  return descMap[type] || (type ? "类型：" + type : "模型");
 };
 </script>

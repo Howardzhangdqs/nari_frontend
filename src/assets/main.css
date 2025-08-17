@@ -111,3 +111,7 @@
 .gutters-3>[class*=v-col-] {
   padding: 12px;
 }
+
+.w-max-content {
+  width: max-content;
+}

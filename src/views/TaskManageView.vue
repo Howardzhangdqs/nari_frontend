@@ -38,14 +38,38 @@
             <!-- 任务列表 -->
             <v-data-table :headers="headers" :items="filteredTasks" :loading="loading"
               :sort-by="[{ key: sortBy, order: 'desc' }]" class="elevation-1">
+              <template v-slot:[`header.status`]>
+                <div class="text-center">任务状态</div>
+              </template>
+              <template v-slot:[`header.dataset`]>
+                <div class="text-center">数据集</div>
+              </template>
+              <template v-slot:[`header.model`]>
+                <div class="text-center">预测模型</div>
+              </template>
+              <template v-slot:[`header.progress`]>
+                <div class="text-center">进度</div>
+              </template>
+              <template v-slot:[`header.creator`]>
+                <div class="text-center">创建人</div>
+              </template>
+              <template v-slot:[`header.createdAt`]>
+                <div class="text-center">创建时间</div>
+              </template>
+              <template v-slot:[`header.updatedAt`]>
+                <div class="text-center">最近更新</div>
+              </template>
+              <template v-slot:[`header.actions`]>
+                <div class="text-left fixed-right">操作</div>
+              </template>
 
               <!-- 任务名称 -->
               <template v-slot:[`item.name`]="{ item }">
                 <div class="d-flex align-center">
                   <v-icon class="mr-2" color="primary">mdi-clipboard-text</v-icon>
                   <div>
-                    <div class="font-weight-medium">{{ item.name }}</div>
-                    <div class="text-caption text-medium-emphasis">
+                    <div class="font-weight-medium w-max-content">{{ item.name }}</div>
+                    <div class="text-caption text-medium-emphasis w-max-content">
                       {{ item.description || '暂无描述' }}
                     </div>
                   </div>
@@ -54,24 +78,30 @@
 
               <!-- 任务状态 -->
               <template v-slot:[`item.status`]="{ item }">
-                <v-chip :color="getStatusColor(item.status)" size="small">
-                  <v-icon start :icon="getStatusIcon(item.status)"></v-icon>
-                  {{ getStatusText(item.status) }}
-                </v-chip>
+                <div class="d-flex align-center justify-center">
+                  <v-chip :color="getStatusColor(item.status)" size="small">
+                    <v-icon start :icon="getStatusIcon(item.status)"></v-icon>
+                    {{ getStatusText(item.status) }}
+                  </v-chip>
+                </div>
               </template>
 
               <!-- 数据集 -->
               <template v-slot:[`item.dataset`]="{ item }">
-                <v-chip size="small" color="info" variant="outlined">
-                  {{ item.dataset }}
-                </v-chip>
+                <div class="d-flex align-center justify-center">
+                  <v-chip size="small" color="info" variant="outlined">
+                    {{ item.dataset }}
+                  </v-chip>
+                </div>
               </template>
 
               <!-- 预测模型 -->
               <template v-slot:[`item.model`]="{ item }">
-                <v-chip size="small" :color="getModelTypeColor(item.modelType)" variant="outlined">
-                  {{ item.model }}
-                </v-chip>
+                <div class="d-flex align-center justify-center">
+                  <v-chip size="small" :color="getModelTypeColor(item.modelType)" variant="outlined">
+                    {{ item.model }}
+                  </v-chip>
+                </div>
               </template>
 
               <!-- 进度 -->
@@ -81,6 +111,13 @@
                     rounded class="mr-2">
                   </v-progress-linear>
                   <div class="text-caption">{{ item.progress }}%</div>
+                </div>
+              </template>
+
+              <!-- 创建时间 -->
+              <template v-slot:[`item.creator`]="{ item }">
+                <div class="w-max-content">
+                  {{ item.creator }}
                 </div>
               </template>
 
@@ -106,7 +143,7 @@
 
               <!-- 操作列 -->
               <template v-slot:[`item.actions`]="{ item }">
-                <div class="d-flex gap-2">
+                <div class="d-flex gap-1 fixed-right">
                   <!-- 状态监视 -->
                   <v-btn v-if="item.status === 'running'" size="small" variant="text" color="primary" icon
                     @click="viewTaskMonitor(item)">
@@ -121,36 +158,23 @@
                     <v-icon>mdi-chart-line</v-icon>
                   </v-btn>
 
-                  <!-- 更多操作 -->
-                  <v-menu>
-                    <template v-slot:activator="{ props }">
-                      <v-btn size="small" variant="text" v-bind="props" icon>
-                        <v-tooltip activator="parent">更多操作</v-tooltip>
-                        <v-icon>mdi-dots-vertical</v-icon>
-                      </v-btn>
-                    </template>
-                    <v-list>
-                      <v-list-item @click="updateTask(item)">
-                        <template v-slot:prepend>
-                          <v-icon>mdi-refresh</v-icon>
-                        </template>
-                        <v-list-item-title>更新</v-list-item-title>
-                      </v-list-item>
-                      <v-list-item @click="editTask(item)">
-                        <template v-slot:prepend>
-                          <v-icon>mdi-pencil</v-icon>
-                        </template>
-                        <v-list-item-title>编辑</v-list-item-title>
-                      </v-list-item>
-                      <v-divider></v-divider>
-                      <v-list-item @click="deleteTask(item)" class="text-error">
-                        <template v-slot:prepend>
-                          <v-icon color="error">mdi-delete</v-icon>
-                        </template>
-                        <v-list-item-title>删除</v-list-item-title>
-                      </v-list-item>
-                    </v-list>
-                  </v-menu>
+                  <!-- 更新按钮 -->
+                  <v-btn size="small" variant="text" color="info" icon @click="updateTask(item)">
+                    <v-tooltip activator="parent">更新</v-tooltip>
+                    <v-icon>mdi-refresh</v-icon>
+                  </v-btn>
+
+                  <!-- 编辑按钮 -->
+                  <v-btn size="small" variant="text" color="primary" icon @click="editTask(item)">
+                    <v-tooltip activator="parent">编辑</v-tooltip>
+                    <v-icon>mdi-pencil</v-icon>
+                  </v-btn>
+
+                  <!-- 删除按钮 -->
+                  <v-btn size="small" variant="text" color="error" icon @click="deleteTask(item)">
+                    <v-tooltip activator="parent">删除</v-tooltip>
+                    <v-icon>mdi-delete</v-icon>
+                  </v-btn>
                 </div>
               </template>
             </v-data-table>
@@ -170,19 +194,29 @@
           <v-form ref="taskForm" v-model="taskFormValid">
             <v-row>
               <v-col cols="12" md="6">
-                <v-text-field v-model="newTask.name" label="任务名称" :rules="[rules.required]"
-                  variant="outlined"></v-text-field>
+                <v-text-field v-model="newTask.name" :rules="[rules.required]" variant="outlined">
+                  <template v-slot:label>
+                    <span class="text-error">*</span> 任务名称
+                  </template>
+                </v-text-field>
               </v-col>
               <v-col cols="12" md="6">
-                <v-text-field v-model="newTask.creator" label="任务创建人" :rules="[rules.required]"
-                  variant="outlined"></v-text-field>
+                <v-text-field v-model="newTask.creator" :rules="[rules.required]" variant="outlined">
+                  <template v-slot:label>
+                    <span class="text-error">*</span> 任务创建人
+                  </template>
+                </v-text-field>
               </v-col>
               <v-col cols="12">
                 <v-textarea v-model="newTask.description" label="任务信息" variant="outlined" rows="3"></v-textarea>
               </v-col>
               <v-col cols="12" md="6">
-                <v-select v-model="newTask.dataset" :items="availableDatasets" label="选用数据集" :rules="[rules.required]"
-                  variant="outlined"></v-select>
+                <v-select v-model="newTask.dataset" :items="availableDatasets" :rules="[rules.required]"
+                  variant="outlined">
+                  <template v-slot:label>
+                    <span class="text-error">*</span> 选用数据集
+                  </template>
+                </v-select>
               </v-col>
               <v-col cols="12" md="6">
                 <v-select v-model="newTask.model" :items="availableModels" label="预测模型选择" variant="outlined"></v-select>
@@ -316,14 +350,14 @@ const taskToDelete = ref<Task | null>(null);
 // 表格列定义
 const headers = [
   { title: "任务名称", key: "name", sortable: true, width: 200 },
-  { title: "任务状态", key: "status", sortable: true, align: "center" as const },
-  { title: "数据集", key: "dataset", sortable: true, align: "center" as const },
-  { title: "预测模型", key: "model", sortable: true, align: "center" as const },
-  { title: "进度", key: "progress", sortable: true, align: "center" as const },
-  { title: "创建人", key: "creator", sortable: true, align: "center" as const },
-  { title: "创建时间", key: "createdAt", sortable: true, align: "center" as const },
-  { title: "最近更新", key: "updatedAt", sortable: true, align: "center" as const },
-  { title: "操作", key: "actions", sortable: false, width: 150, align: "center" as const }
+  { title: "", key: "status", sortable: true },
+  { title: "", key: "dataset", sortable: true },
+  { title: "", key: "model", sortable: true },
+  { title: "", key: "progress", sortable: true },
+  { title: "", key: "creator", sortable: true },
+  { title: "", key: "createdAt", sortable: true },
+  { title: "", key: "updatedAt", sortable: true },
+  { title: "操作", key: "actions", sortable: false, width: 280, align: "center" as const }
 ];
 
 // 筛选选项
@@ -627,5 +661,36 @@ onMounted(() => {
 <style scoped>
 .text-medium-emphasis {
   opacity: 0.7;
+}
+</style>
+
+<style>
+/* 将样式应用到包含 .fixed-right 元素的父单元格（表头/表格单元格） */
+th:has(.fixed-right),
+td:has(.fixed-right) {
+  position: sticky;
+  right: 0;
+  top: 0;
+  background-color: #ffffff;
+  z-index: 1;
+  padding-right: 8px;
+  overflow: visible;
+  /* 允许伪元素溢出显示渐变 */
+}
+
+/* 在固定列左侧添加从淡到深的渐变（左侧由淡变深） */
+th:has(.fixed-right)::before,
+td:has(.fixed-right)::before {
+  content: "";
+  position: absolute;
+  left: -24px;
+  /* 渐变区域宽度，可调整 */
+  top: 0;
+  bottom: 0;
+  width: 24px;
+  pointer-events: none;
+  z-index: 2;
+  /* 从左到右由透明（淡）渐变到微暗（深），可根据主题调整颜色/透明度 */
+  background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(0, 0, 0, 0.06));
 }
 </style>

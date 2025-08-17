@@ -38,6 +38,21 @@
             <!-- 数据集列表 -->
             <v-data-table :headers="headers" :items="filteredDatasets" :loading="loading"
               :sort-by="[{ key: sortBy, order: 'desc' }]" class="elevation-1 dataset-table">
+              <template v-slot:[`header.dataInfo`]>
+                <div class="text-center">数据基础信息</div>
+              </template>
+              <template v-slot:[`header.recordCount`]>
+                <div class="text-center">数据条数</div>
+              </template>
+              <template v-slot:[`header.createdAt`]>
+                <div class="text-center">创建时间</div>
+              </template>
+              <template v-slot:[`header.updateCount`]>
+                <div class="text-center">更新次数</div>
+              </template>
+              <template v-slot:[`header.creator`]>
+                <div class="text-center">创建人</div>
+              </template>
 
               <!-- 数据集名称 -->
               <template v-slot:[`item.name`]="{ item }">
@@ -93,43 +108,30 @@
 
               <!-- 操作列 -->
               <template v-slot:[`item.actions`]="{ item }">
-                <div class="d-flex gap-2">
-                  <!-- 新增按钮（仅在数据集行中显示） -->
+                <div class="d-flex gap-1">
+                  <!-- 新增按钮 -->
                   <v-btn size="small" variant="text" color="primary" icon @click="addDataset">
                     <v-tooltip activator="parent">新增数据集</v-tooltip>
                     <v-icon>mdi-plus</v-icon>
                   </v-btn>
 
-                  <!-- 更多操作 -->
-                  <v-menu>
-                    <template v-slot:activator="{ props }">
-                      <v-btn size="small" variant="text" v-bind="props" icon>
-                        <v-tooltip activator="parent">更多操作</v-tooltip>
-                        <v-icon>mdi-dots-vertical</v-icon>
-                      </v-btn>
-                    </template>
-                    <v-list>
-                      <v-list-item @click="updateDataset(item)">
-                        <template v-slot:prepend>
-                          <v-icon>mdi-refresh</v-icon>
-                        </template>
-                        <v-list-item-title>更新</v-list-item-title>
-                      </v-list-item>
-                      <v-list-item @click="editDataset(item)">
-                        <template v-slot:prepend>
-                          <v-icon>mdi-pencil</v-icon>
-                        </template>
-                        <v-list-item-title>编辑</v-list-item-title>
-                      </v-list-item>
-                      <v-divider></v-divider>
-                      <v-list-item @click="deleteDataset(item)" class="text-error">
-                        <template v-slot:prepend>
-                          <v-icon color="error">mdi-delete</v-icon>
-                        </template>
-                        <v-list-item-title>删除</v-list-item-title>
-                      </v-list-item>
-                    </v-list>
-                  </v-menu>
+                  <!-- 更新按钮 -->
+                  <v-btn size="small" variant="text" color="info" icon @click="updateDataset(item)">
+                    <v-tooltip activator="parent">更新</v-tooltip>
+                    <v-icon>mdi-refresh</v-icon>
+                  </v-btn>
+
+                  <!-- 编辑按钮 -->
+                  <v-btn size="small" variant="text" color="primary" icon @click="editDataset(item)">
+                    <v-tooltip activator="parent">编辑</v-tooltip>
+                    <v-icon>mdi-pencil</v-icon>
+                  </v-btn>
+
+                  <!-- 删除按钮 -->
+                  <v-btn size="small" variant="text" color="error" icon @click="deleteDataset(item)">
+                    <v-tooltip activator="parent">删除</v-tooltip>
+                    <v-icon>mdi-delete</v-icon>
+                  </v-btn>
                 </div>
               </template>
             </v-data-table>
@@ -147,20 +149,34 @@
         </v-card-title>
         <v-card-text>
           <v-form ref="uploadForm" v-model="uploadFormValid">
-            <v-text-field v-model="newDataset.name" label="数据集名称" :rules="[rules.required]" variant="outlined"
-              class="mb-3"></v-text-field>
+            <v-text-field v-model="newDataset.name" :rules="[rules.required]" variant="outlined" class="mb-3">
+              <template v-slot:label>
+                <span class="text-error">*</span> 数据集名称
+              </template>
+            </v-text-field>
 
             <v-textarea v-model="newDataset.description" label="数据集描述" variant="outlined" rows="2"
               class="mb-3"></v-textarea>
 
-            <v-text-field v-model="newDataset.dataInfo" label="数据基础信息" :rules="[rules.required]" variant="outlined"
-              placeholder="如：时序数据，包含负荷、温度、湿度等特征" class="mb-3"></v-text-field>
+            <v-text-field v-model="newDataset.dataInfo" :rules="[rules.required]" variant="outlined"
+              placeholder="如：时序数据，包含负荷、温度、湿度等特征" class="mb-3">
+              <template v-slot:label>
+                <span class="text-error">*</span> 数据基础信息
+              </template>
+            </v-text-field>
 
-            <v-text-field v-model="newDataset.creator" label="创建人" :rules="[rules.required]" variant="outlined"
-              class="mb-3"></v-text-field>
+            <v-text-field v-model="newDataset.creator" :rules="[rules.required]" variant="outlined" class="mb-3">
+              <template v-slot:label>
+                <span class="text-error">*</span> 创建人
+              </template>
+            </v-text-field>
 
-            <v-file-input v-model="newDataset.file" label="选择数据文件" accept=".csv,.xlsx,.json" :rules="[rules.required]"
-              variant="outlined" show-size class="mb-3"></v-file-input>
+            <v-file-input v-model="newDataset.file" accept=".csv,.xlsx,.json" :rules="[rules.required]"
+              variant="outlined" show-size class="mb-3">
+              <template v-slot:label>
+                <span class="text-error">*</span> 选择数据文件
+              </template>
+            </v-file-input>
           </v-form>
         </v-card-text>
         <v-card-actions>
@@ -220,8 +236,11 @@
                     <div class="text-h6 mb-4">数据库配置</div>
                     <v-row>
                       <v-col cols="12" md="6">
-                        <v-text-field v-model="uploadConfig.tableName" label="表名" variant="outlined"
-                          :rules="[rules.required]"></v-text-field>
+                        <v-text-field v-model="uploadConfig.tableName" variant="outlined" :rules="[rules.required]">
+                          <template v-slot:label>
+                            <span class="text-error">*</span> 表名
+                          </template>
+                        </v-text-field>
                       </v-col>
                       <v-col cols="12" md="6">
                         <v-select v-model="uploadConfig.database" :items="databaseOptions" label="目标数据库"
@@ -309,12 +328,12 @@ type HeaderAlign = "center" | "end" | "start" | undefined;
 // 表格列定义
 const headers = [
   { title: "数据集名称", key: "name", sortable: true },
-  { title: "数据基础信息", key: "dataInfo", sortable: false },
-  { title: "数据条数", key: "recordCount", sortable: true, align: "center" as HeaderAlign },
-  { title: "创建时间", key: "createdAt", sortable: true, align: "center" as HeaderAlign },
-  { title: "更新次数", key: "updateCount", sortable: true, align: "center" as HeaderAlign },
-  { title: "创建人", key: "creator", sortable: true, align: "center" as HeaderAlign },
-  { title: "操作", key: "actions", sortable: false, width: 200, align: "end" as HeaderAlign }
+  { title: "", key: "dataInfo", sortable: false },
+  { title: "", key: "recordCount", sortable: true },
+  { title: "", key: "createdAt", sortable: true },
+  { title: "", key: "updateCount", sortable: true },
+  { title: "", key: "creator", sortable: true },
+  { title: "操作", key: "actions", sortable: false, width: 250, align: "end" as HeaderAlign }
 ];
 
 // 筛选选项

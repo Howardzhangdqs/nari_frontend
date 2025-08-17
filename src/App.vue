@@ -88,14 +88,10 @@ const getRoleDisplayName = (role?: string) => {
       <v-navigation-drawer style="user-select: none;" v-model="section_opened" :permanent="mdAndUp"
         :temporary="!mdAndUp">
         <v-list>
-          <v-tooltip text="平台Logo及名称">
-            <template v-slot:activator="{ props }">
-              <v-list-item v-bind="props">
-                <img src="/nuist-logo.png" style="width: 100%" />
-                发电功率与电力负荷预测平台
-              </v-list-item>
-            </template>
-          </v-tooltip>
+          <v-list-item>
+            <img src="/nuist-logo.png" style="width: 100%" />
+            发电功率与电力负荷预测平台
+          </v-list-item>
         </v-list>
 
         <v-divider></v-divider>
@@ -112,7 +108,8 @@ const getRoleDisplayName = (role?: string) => {
             <v-list-item-subtitle class="text-caption">{{ getRoleDisplayName(currentUser?.role)
             }}</v-list-item-subtitle>
             <template v-slot:append>
-              <v-btn v-if="currentUser?.role === 'administrator'" size="small" @click="router.push('/admin')" variant="text" icon class="mr-1">
+              <v-btn v-if="currentUser?.role === 'administrator'" size="small" @click="router.push('/admin')"
+                variant="text" icon class="mr-1">
                 <v-tooltip activator="parent" text="管理员控制台"></v-tooltip>
                 <v-icon size="20">mdi-shield-account</v-icon>
               </v-btn>

@@ -108,20 +108,36 @@
           <v-form ref="modelFormRef" v-model="isFormValid">
             <v-row>
               <v-col cols="12">
-                <v-text-field v-model="modelForm.name" label="模型名称" variant="outlined" :rules="[v => !!v || '请输入模型名称']"
-                  required></v-text-field>
+                <v-text-field v-model="modelForm.name" variant="outlined" :rules="[v => !!v || '请输入模型名称']"
+                  required>
+                  <template v-slot:label>
+                    <span class="text-error">*</span> 模型名称
+                  </template>
+                </v-text-field>
               </v-col>
               <v-col cols="12">
-                <v-textarea v-model="modelForm.description" label="模型描述" variant="outlined" rows="3"
-                  :rules="[v => !!v || '请输入模型描述']" required></v-textarea>
+                <v-textarea v-model="modelForm.description" variant="outlined" rows="3"
+                  :rules="[v => !!v || '请输入模型描述']" required>
+                  <template v-slot:label>
+                    <span class="text-error">*</span> 模型描述
+                  </template>
+                </v-textarea>
               </v-col>
               <v-col cols="12" md="6">
-                <v-select v-model="modelForm.type" :items="modelTypes" label="模型类型" variant="outlined"
-                  :rules="[v => !!v || '请选择模型类型']" required></v-select>
+                <v-select v-model="modelForm.type" :items="modelTypes" variant="outlined"
+                  :rules="[v => !!v || '请选择模型类型']" required>
+                  <template v-slot:label>
+                    <span class="text-error">*</span> 模型类型
+                  </template>
+                </v-select>
               </v-col>
               <v-col cols="12" md="6">
-                <v-select v-model="modelForm.complexity" :items="complexityOptions" label="复杂度" variant="outlined"
-                  :rules="[v => !!v || '请选择复杂度']" required></v-select>
+                <v-select v-model="modelForm.complexity" :items="complexityOptions" variant="outlined"
+                  :rules="[v => !!v || '请选择复杂度']" required>
+                  <template v-slot:label>
+                    <span class="text-error">*</span> 复杂度
+                  </template>
+                </v-select>
               </v-col>
               <v-col cols="12" md="6">
                 <v-text-field v-model="modelForm.framework" label="框架" variant="outlined"
