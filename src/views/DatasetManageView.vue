@@ -73,8 +73,12 @@
               <!-- 数据基础信息 -->
               <template v-slot:[`item.dataInfo`]="{ item }">
                 <div class="d-flex align-center justify-center">
-                  <div class="text-body-2 text-truncate" style="max-width: 200px;" :title="item.dataInfo">
-                    {{ item.dataInfo }}
+                  <div class="text-body-2 text-truncate" style="max-width: 150px;">
+                    <v-tooltip :text="item.dataInfo" location="top">
+                      <template v-slot:activator="{ props }">
+                        <span v-bind="props">{{ item.dataInfo }}</span>
+                      </template>
+                    </v-tooltip>
                   </div>
                 </div>
               </template>

@@ -50,16 +50,31 @@
               <template v-slot:[`header.createdAt`]>
                 <div class="text-center">创建时间</div>
               </template>
+              <template v-slot:[`header.description`]>
+                <div class="text-center">基本内容</div>
+              </template>
               <template v-slot:[`header.actions`]>
                 <div class="text-left fixed-right">操作</div>
               </template>
-              
+
               <template v-slot:[`item.name`]="{ item }">
                 <div class="d-flex align-center">
                   <v-icon class="mr-2" :color="getModelTypeColor(item.type)">mdi-brain</v-icon>
                   <div>
                     <div class="font-weight-medium w-max-content">{{ item.name }}</div>
-                    <div class="text-caption text-medium-emphasis w-max-content">{{ item.description }}</div>
+                    <!-- <div class="text-caption text-medium-emphasis w-max-content">{{ item.description }}</div> -->
+                  </div>
+                </div>
+              </template>
+
+              <template v-slot:[`item.description`]="{ item }">
+                <div class="d-flex align-center justify-center">
+                  <div class="text-truncate" style="max-width: 150px;">
+                    <v-tooltip :text="item.description" location="top">
+                      <template v-slot:activator="{ props }">
+                        <span v-bind="props">{{ item.description }}</span>
+                      </template>
+                    </v-tooltip>
                   </div>
                 </div>
               </template>
@@ -132,16 +147,15 @@
           <v-form ref="modelFormRef" v-model="isFormValid">
             <v-row>
               <v-col cols="12">
-                <v-text-field v-model="modelForm.name" variant="outlined" :rules="[v => !!v || '请输入模型名称']"
-                  required>
+                <v-text-field v-model="modelForm.name" variant="outlined" :rules="[v => !!v || '请输入模型名称']" required>
                   <template v-slot:label>
                     <span class="text-error">*</span> 模型名称
                   </template>
                 </v-text-field>
               </v-col>
               <v-col cols="12">
-                <v-textarea v-model="modelForm.description" variant="outlined" rows="3"
-                  :rules="[v => !!v || '请输入模型描述']" required>
+                <v-textarea v-model="modelForm.description" variant="outlined" rows="3" :rules="[v => !!v || '请输入模型描述']"
+                  required>
                   <template v-slot:label>
                     <span class="text-error">*</span> 模型描述
                   </template>
