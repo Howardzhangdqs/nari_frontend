@@ -53,14 +53,17 @@
               <template v-slot:[`header.creator`]>
                 <div class="text-center">创建人</div>
               </template>
+              <template v-slot:[`header.actions`]>
+                <div class="text-left fixed-right">操作</div>
+              </template>
 
               <!-- 数据集名称 -->
               <template v-slot:[`item.name`]="{ item }">
                 <div class="d-flex align-center">
                   <v-icon class="mr-2" color="primary">mdi-file-table</v-icon>
                   <div>
-                    <div class="font-weight-medium">{{ item.name }}</div>
-                    <div class="text-caption text-medium-emphasis">
+                    <div class="font-weight-medium w-max-content">{{ item.name }}</div>
+                    <div class="text-caption text-medium-emphasis w-max-content">
                       {{ item.description || '暂无描述' }}
                     </div>
                   </div>
@@ -69,14 +72,20 @@
 
               <!-- 数据基础信息 -->
               <template v-slot:[`item.dataInfo`]="{ item }">
-                <div class="text-body-2">{{ item.dataInfo }}</div>
+                <div class="d-flex align-center justify-center">
+                  <div class="text-body-2 text-truncate" style="max-width: 200px;" :title="item.dataInfo">
+                    {{ item.dataInfo }}
+                  </div>
+                </div>
               </template>
 
               <!-- 数据条数 -->
               <template v-slot:[`item.recordCount`]="{ item }">
-                <v-chip size="small" color="info" variant="outlined">
-                  {{ item.recordCount.toLocaleString() }} 条
-                </v-chip>
+                <div class="d-flex align-center justify-center">
+                  <v-chip size="small" color="info" variant="outlined">
+                    {{ item.recordCount.toLocaleString() }} 条
+                  </v-chip>
+                </div>
               </template>
 
               <!-- 创建时间 -->
@@ -91,24 +100,25 @@
 
               <!-- 更新次数 -->
               <template v-slot:[`item.updateCount`]="{ item }">
-                <v-chip size="small" :color="item.updateCount > 0 ? 'success' : 'default'" variant="outlined">
-                  {{ item.updateCount }} 次
-                </v-chip>
+                <div class="d-flex align-center justify-center">
+                  <v-chip size="small" :color="item.updateCount > 0 ? 'success' : 'default'" variant="outlined">
+                    {{ item.updateCount }} 次
+                  </v-chip>
+                </div>
               </template>
 
               <!-- 创建人 -->
               <template v-slot:[`item.creator`]="{ item }">
-                <div class="d-flex align-center">
-                  <v-avatar size="24" color="primary" class="mr-2">
-                    <v-icon size="14">mdi-account</v-icon>
-                  </v-avatar>
-                  {{ item.creator }}
+                <div class="d-flex align-center justify-center">
+                  <div class="w-max-content">
+                    {{ item.creator }}
+                  </div>
                 </div>
               </template>
 
               <!-- 操作列 -->
               <template v-slot:[`item.actions`]="{ item }">
-                <div class="d-flex gap-1">
+                <div class="d-flex gap-1 fixed-right">
                   <!-- 新增按钮 -->
                   <v-btn size="small" variant="text" color="primary" icon @click="addDataset">
                     <v-tooltip activator="parent">新增数据集</v-tooltip>
@@ -327,13 +337,13 @@ type HeaderAlign = "center" | "end" | "start" | undefined;
 
 // 表格列定义
 const headers = [
-  { title: "数据集名称", key: "name", sortable: true },
+  { title: "数据集名称", key: "name", sortable: true, width: 200 },
   { title: "", key: "dataInfo", sortable: false },
   { title: "", key: "recordCount", sortable: true },
   { title: "", key: "createdAt", sortable: true },
   { title: "", key: "updateCount", sortable: true },
   { title: "", key: "creator", sortable: true },
-  { title: "操作", key: "actions", sortable: false, width: 250, align: "end" as HeaderAlign }
+  { title: "操作", key: "actions", sortable: false, width: 250, align: "center" as const }
 ];
 
 // 筛选选项
@@ -646,5 +656,36 @@ onMounted(() => {
 
 .text-medium-emphasis {
   opacity: 0.7;
+}
+</style>
+
+<style>
+/* 将样式应用到包含 .fixed-right 元素的父单元格（表头/表格单元格） */
+th:has(.fixed-right),
+td:has(.fixed-right) {
+  position: sticky;
+  right: 0;
+  top: 0;
+  background-color: #ffffff;
+  z-index: 1;
+  padding-right: 8px;
+  overflow: visible;
+  /* 允许伪元素溢出显示渐变 */
+}
+
+/* 在固定列左侧添加从淡到深的渐变（左侧由淡变深） */
+th:has(.fixed-right)::before,
+td:has(.fixed-right)::before {
+  content: "";
+  position: absolute;
+  left: -24px;
+  /* 渐变区域宽度，可调整 */
+  top: 0;
+  bottom: 0;
+  width: 24px;
+  pointer-events: none;
+  z-index: 2;
+  /* 从左到右由透明（淡）渐变到微暗（深），可根据主题调整颜色/透明度 */
+  background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(0, 0, 0, 0.06));
 }
 </style>

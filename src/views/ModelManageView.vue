@@ -38,41 +38,65 @@
             <!-- 模型列表 -->
             <v-data-table :headers="headers" :items="filteredModels" :loading="isLoading" class="elevation-1"
               :items-per-page="10" items-per-page-text="每页显示">
+              <template v-slot:[`header.type`]>
+                <div class="text-center">模型类型</div>
+              </template>
+              <template v-slot:[`header.usageCount`]>
+                <div class="text-center">使用次数</div>
+              </template>
+              <template v-slot:[`header.status`]>
+                <div class="text-center">状态</div>
+              </template>
+              <template v-slot:[`header.createdAt`]>
+                <div class="text-center">创建时间</div>
+              </template>
+              <template v-slot:[`header.actions`]>
+                <div class="text-left fixed-right">操作</div>
+              </template>
+              
               <template v-slot:[`item.name`]="{ item }">
                 <div class="d-flex align-center">
                   <v-icon class="mr-2" :color="getModelTypeColor(item.type)">mdi-brain</v-icon>
                   <div>
-                    <div class="font-weight-medium">{{ item.name }}</div>
-                    <div class="text-caption text-medium-emphasis">{{ item.description }}</div>
+                    <div class="font-weight-medium w-max-content">{{ item.name }}</div>
+                    <div class="text-caption text-medium-emphasis w-max-content">{{ item.description }}</div>
                   </div>
                 </div>
               </template>
 
               <template v-slot:[`item.type`]="{ item }">
-                <v-chip size="small" :color="getModelTypeColor(item.type)">
-                  {{ item.type }}
-                </v-chip>
+                <div class="d-flex align-center justify-center">
+                  <v-chip size="small" :color="getModelTypeColor(item.type)">
+                    {{ item.type }}
+                  </v-chip>
+                </div>
               </template>
 
               <template v-slot:[`item.usageCount`]="{ item }">
-                <v-chip size="small" color="primary" variant="outlined">
-                  {{ item.usageCount }} 次
-                </v-chip>
+                <div class="d-flex align-center justify-center">
+                  <v-chip size="small" color="primary" variant="outlined">
+                    {{ item.usageCount }} 次
+                  </v-chip>
+                </div>
               </template>
 
               <template v-slot:[`item.status`]="{ item }">
-                <v-chip size="small"
-                  :color="item.status === 'active' ? 'success' : item.status === 'training' ? 'warning' : 'error'">
-                  {{ getStatusText(item.status) }}
-                </v-chip>
+                <div class="d-flex align-center justify-center">
+                  <v-chip size="small"
+                    :color="item.status === 'active' ? 'success' : item.status === 'training' ? 'warning' : 'error'">
+                    {{ getStatusText(item.status) }}
+                  </v-chip>
+                </div>
               </template>
 
               <template v-slot:[`item.createdAt`]="{ item }">
-                {{ formatDate(item.createdAt) }}
+                <div>
+                  <div>{{ formatDate(item.createdAt) }}</div>
+                </div>
               </template>
 
               <template v-slot:[`item.actions`]="{ item }">
-                <div class="d-flex gap-1">
+                <div class="d-flex gap-1 fixed-right">
                   <v-btn size="small" variant="text" color="primary" icon @click="editModel(item)">
                     <v-tooltip activator="parent" text="编辑"></v-tooltip>
                     <v-icon>mdi-pencil</v-icon>
@@ -369,13 +393,13 @@ const models = ref<Model[]>([
 
 // 表格配置
 const headers = [
-  { title: "模型名称", key: "name", sortable: true },
-  { title: "模型类型", key: "type", sortable: true },
+  { title: "模型名称", key: "name", sortable: true, width: 200 },
+  { title: "", key: "type", sortable: true },
   { title: "基本内容", key: "description", sortable: false },
-  { title: "创建时间", key: "createdAt", sortable: true },
-  { title: "使用次数", key: "usageCount", sortable: true },
-  { title: "状态", key: "status", sortable: true },
-  { title: "操作", key: "actions", sortable: false, width: 180 }
+  { title: "", key: "createdAt", sortable: true },
+  { title: "", key: "usageCount", sortable: true },
+  { title: "", key: "status", sortable: true },
+  { title: "操作", key: "actions", sortable: false, width: 200, align: "center" as const }
 ];
 
 // 选项数据
@@ -615,5 +639,36 @@ onMounted(() => {
 <style scoped>
 .v-data-table {
   border-radius: 8px;
+}
+</style>
+
+<style>
+/* 将样式应用到包含 .fixed-right 元素的父单元格（表头/表格单元格） */
+th:has(.fixed-right),
+td:has(.fixed-right) {
+  position: sticky;
+  right: 0;
+  top: 0;
+  background-color: #ffffff;
+  z-index: 1;
+  padding-right: 8px;
+  overflow: visible;
+  /* 允许伪元素溢出显示渐变 */
+}
+
+/* 在固定列左侧添加从淡到深的渐变（左侧由淡变深） */
+th:has(.fixed-right)::before,
+td:has(.fixed-right)::before {
+  content: "";
+  position: absolute;
+  left: -24px;
+  /* 渐变区域宽度，可调整 */
+  top: 0;
+  bottom: 0;
+  width: 24px;
+  pointer-events: none;
+  z-index: 2;
+  /* 从左到右由透明（淡）渐变到微暗（深），可根据主题调整颜色/透明度 */
+  background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(0, 0, 0, 0.06));
 }
 </style>
