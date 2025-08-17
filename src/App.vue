@@ -53,7 +53,7 @@ const getRoleDisplayName = (role?: string) => {
   <div v-else class="main-container">
     <v-layout>
       <!-- 顶栏导航 -->
-      <v-app-bar style="user-select: none;" color="primary">
+      <v-app-bar style="user-select: none;" color="info">
         <template v-slot:prepend>
           <img src="/nuist-logo.png" style="height: 35px; margin: 0px 0px 0px 16px;" />
         </template>
