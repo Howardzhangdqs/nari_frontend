@@ -2,7 +2,7 @@
   <v-container fluid>
     <v-row>
       <v-col cols="12">
-        <v-card>
+        <v-card variant="text">
           <v-card-title class="d-flex justify-space-between align-center">
             <div>
               <v-icon class="mr-2">mdi-shield-account</v-icon>

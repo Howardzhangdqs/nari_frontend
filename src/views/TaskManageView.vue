@@ -14,36 +14,30 @@
           </v-card-title>
 
           <v-card-text>
-            <!-- 左右布局：左侧筛选区域，右侧任务列表 -->
-            <v-row>
-              <!-- 左侧筛选区域 -->
-              <v-col cols="12" md="3">
-                <v-card class="pa-4">
-                  <v-card-title class="text-h6 pa-0 mb-4">筛选条件</v-card-title>
-                  
-                  <!-- 搜索框 -->
-                  <v-text-field v-model="searchKeyword" label="搜索任务名称" prepend-inner-icon="mdi-magnify" variant="outlined"
-                    density="compact" clearable class="mb-4"></v-text-field>
-                  
-                  <!-- 状态筛选 -->
-                  <v-select v-model="statusFilter" :items="statusOptions" label="任务状态" variant="outlined"
-                    density="compact" clearable class="mb-4"></v-select>
-                  
-                  <!-- 排序方式 -->
-                  <v-select v-model="sortBy" :items="sortOptions" label="排序方式" variant="outlined"
-                    density="compact" class="mb-4"></v-select>
-                  
-                  <!-- 刷新按钮 -->
-                  <v-btn variant="outlined" prepend-icon="mdi-refresh" @click="refreshData" block>
-                    刷新数据
-                  </v-btn>
-                </v-card>
+            <!-- 搜索和筛选 -->
+            <v-row class="mb-4">
+              <v-col cols="12" md="4">
+                <v-text-field v-model="searchKeyword" label="搜索任务名称" prepend-inner-icon="mdi-magnify" variant="outlined"
+                  density="compact" clearable></v-text-field>
               </v-col>
-              
-              <!-- 右侧任务列表 -->
-              <v-col cols="12" md="9">
-                <v-data-table :headers="headers" :items="filteredTasks" :loading="loading"
-                  :sort-by="[{ key: sortBy, order: 'desc' }]" class="elevation-1">
+              <v-col cols="12" md="3">
+                <v-select v-model="statusFilter" :items="statusOptions" label="任务状态" variant="outlined"
+                  density="compact" clearable></v-select>
+              </v-col>
+              <v-col cols="12" md="3">
+                <v-select v-model="sortBy" :items="sortOptions" label="排序方式" variant="outlined"
+                  density="compact"></v-select>
+              </v-col>
+              <v-col cols="12" md="2">
+                <v-btn variant="text" prepend-icon="mdi-refresh" @click="refreshData" class="mt-1">
+                  刷新
+                </v-btn>
+              </v-col>
+            </v-row>
+
+            <!-- 任务列表 -->
+            <v-data-table :headers="headers" :items="filteredTasks" :loading="loading"
+              :sort-by="[{ key: sortBy, order: 'desc' }]" class="elevation-1">
               <template v-slot:[`header.status`]>
                 <div class="text-center">任务状态</div>
               </template>
