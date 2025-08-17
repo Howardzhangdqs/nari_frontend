@@ -1,34 +1,17 @@
 <script setup lang="ts">
-import { Icon } from "@iconify/vue";
-import { ref, watch, onMounted, computed } from "vue";
+import { ref, watch } from "vue";
 import router from "./router";
-import { useDisplay } from "vuetify";
 import type { RouteLocationNormalizedLoadedGeneric } from "vue-router";
 import LoginView from "./components/LoginView.vue";
 import { currentUser, isAuthenticated, login, logout } from "./stores/auth";
-
-const { mdAndUp } = useDisplay();
 
 const getPageFromRoute = (route: RouteLocationNormalizedLoadedGeneric) => {
   return route.name || "home";
 };
 
 const section_selected = ref([getPageFromRoute(router.currentRoute.value)]);
-let section_selected_past = section_selected.value[0];
 
-// 监听左侧list变化，切换路由
-watch(section_selected, () => {
-  if (section_selected.value.length === 0) {
-    section_selected.value = [section_selected_past];
-  } else {
-    section_selected_past = section_selected.value[0];
-    if (router.currentRoute.value.name !== section_selected.value[0]) {
-      router.push({ name: section_selected.value[0] });
-    }
-  }
-});
-
-// 监听路由变化，切换左侧list
+// 监听路由变化，切换顶栏选中项
 watch(
   () => router.currentRoute.value.name,
   (newName) => {
@@ -37,22 +20,6 @@ watch(
     }
   }
 );
-
-// 修改为响应式控制，默认在大屏上展开
-const section_opened = ref(mdAndUp.value);
-
-// 添加悬浮按钮显示状态
-const showFloatButton = computed(() => !section_opened.value);
-
-// 响应屏幕尺寸变化
-watch(mdAndUp, (newValue) => {
-  section_opened.value = newValue;
-});
-
-// 点击悬浮按钮打开抽屉
-const openDrawer = () => {
-  section_opened.value = true;
-};
 
 // 处理登录成功
 const handleLoginSuccess = (user: { username: string; role: "administrator" | "researcher" | "user" }) => {
@@ -85,93 +52,43 @@ const getRoleDisplayName = (role?: string) => {
   <!-- 已登录时显示主应用界面 -->
   <div v-else class="main-container">
     <v-layout>
-      <v-navigation-drawer style="user-select: none;" v-model="section_opened" :permanent="mdAndUp"
-        :temporary="!mdAndUp">
-        <v-list>
-          <v-list-item>
-            <img src="/nuist-logo.png" style="width: 100%" />
-            发电功率与电力负荷预测平台
-          </v-list-item>
-        </v-list>
+      <!-- 顶栏导航 -->
+      <v-app-bar style="user-select: none;" color="primary">
+        <template v-slot:prepend>
+          <img src="/nuist-logo.png" style="height: 35px; margin: 0px 0px 0px 16px;" />
+        </template>
 
-        <v-divider></v-divider>
+        <v-app-bar-title>发电功率与电力负荷预测平台</v-app-bar-title>
 
-        <!-- 用户信息 -->
-        <v-list>
-          <v-list-item>
-            <template v-slot:prepend>
-              <v-avatar color="primary" size="32">
-                <v-icon>mdi-account</v-icon>
-              </v-avatar>
-            </template>
-            <v-list-item-title class="text-body-2">{{ currentUser?.username }}</v-list-item-title>
-            <v-list-item-subtitle class="text-caption">{{ getRoleDisplayName(currentUser?.role)
-            }}</v-list-item-subtitle>
-            <template v-slot:append>
-              <v-btn v-if="currentUser?.role === 'administrator'" size="small" @click="router.push('/admin')"
-                variant="text" icon class="mr-1">
-                <v-tooltip activator="parent" text="管理员控制台"></v-tooltip>
-                <v-icon size="20">mdi-shield-account</v-icon>
-              </v-btn>
-              <v-btn size="small" @click="handleLogout" variant="text" icon>
-                <v-tooltip activator="parent" text="退出登录"></v-tooltip>
-                <v-icon size="20">mdi-logout</v-icon>
-              </v-btn>
-            </template>
-          </v-list-item>
-        </v-list>
+        <!-- 导航菜单 -->
+        <v-tabs v-model="section_selected[0]" align-tabs="center" color="white">
+          <v-tab value="home" @click="router.push('/')">首页</v-tab>
+          <v-tab value="datasets" @click="router.push('/datasets')">数据集管理</v-tab>
+          <v-tab value="tasks" @click="router.push('/tasks')">任务管理</v-tab>
+          <v-tab value="models" @click="router.push('/models')">模型管理</v-tab>
+          <v-tab value="admin" @click="router.push('/admin')"
+            v-if="currentUser?.role === 'administrator'">管理员控制台</v-tab>
+        </v-tabs>
 
-        <v-divider></v-divider>
+        <template v-slot:append>
 
-        <v-container>
-          <v-list color="primary" v-model:selected="section_selected">
-            <v-tooltip text="模型概况和任务概况">
-              <template v-slot:activator="{ props }">
-                <v-list-item title="首页" value="home" rounded="xl" v-bind="props">
-                  <template #prepend>
-                    <v-icon>
-                      <Icon icon="line-md:home" />
-                    </v-icon>
-                  </template>
-                </v-list-item>
-              </template>
-            </v-tooltip>
-            <v-tooltip text="数据集信息展示、新增、编辑和删除">
-              <template v-slot:activator="{ props }">
-                <v-list-item title="数据集管理" value="datasets" rounded="xl" v-bind="props">
-                  <template #prepend>
-                    <v-icon>
-                      <Icon icon="material-symbols:database" />
-                    </v-icon>
-                  </template>
-                </v-list-item>
-              </template>
-            </v-tooltip>
-            <v-tooltip text="任务管理、创建和监控">
-              <template v-slot:activator="{ props }">
-                <v-list-item title="任务管理" value="tasks" rounded="xl" v-bind="props">
-                  <template #prepend>
-                    <v-icon>
-                      <Icon icon="mdi-clipboard-list" />
-                    </v-icon>
-                  </template>
-                </v-list-item>
-              </template>
-            </v-tooltip>
-            <v-tooltip text="模型信息展示和管理">
-              <template v-slot:activator="{ props }">
-                <v-list-item title="模型管理" value="models" rounded="xl" v-bind="props">
-                  <template #prepend>
-                    <v-icon>
-                      <Icon icon="mdi-brain" />
-                    </v-icon>
-                  </template>
-                </v-list-item>
-              </template>
-            </v-tooltip>
-          </v-list>
-        </v-container>
-      </v-navigation-drawer>
+          <!-- 用户信息 -->
+          <div class="d-flex align-center mx-4">
+            <v-avatar color="white" size="32" class="mr-2">
+              <v-icon color="primary">mdi-account</v-icon>
+            </v-avatar>
+            <div class="text-white">
+              <div class="text-body-2">{{ currentUser?.username }}</div>
+              <div class="text-caption">{{ getRoleDisplayName(currentUser?.role) }}</div>
+            </div>
+          </div>
+
+          <v-btn @click="handleLogout" variant="text" color="white">
+            <v-icon>mdi-logout</v-icon>
+            退出
+          </v-btn>
+        </template>
+      </v-app-bar>
 
       <v-main>
         <router-view v-slot="{ Component }">
@@ -183,12 +100,6 @@ const getRoleDisplayName = (role?: string) => {
         </router-view>
       </v-main>
     </v-layout>
-
-    <v-fab-transition>
-      <v-btn class="float-button" color="primary" fab @click="openDrawer" v-show="showFloatButton" icon>
-        <v-icon>mdi-menu</v-icon>
-      </v-btn>
-    </v-fab-transition>
   </div>
 </template>
 <style scoped>
@@ -196,11 +107,7 @@ const getRoleDisplayName = (role?: string) => {
   position: relative;
 }
 
-.float-button {
-  position: fixed;
-  left: 16px;
-  bottom: 16px;
-  z-index: 999;
-  transition: all 0.3s ease;
+:deep(.v-app-bar.primary) {
+  background-color: rgb(4, 151, 216) !important;
 }
 </style>
