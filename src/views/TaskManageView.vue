@@ -24,10 +24,6 @@
                 <v-select v-model="statusFilter" :items="statusOptions" label="任务状态" variant="outlined"
                   density="compact" clearable></v-select>
               </v-col>
-              <v-col cols="12" md="3">
-                <v-select v-model="sortBy" :items="sortOptions" label="排序方式" variant="outlined"
-                  density="compact"></v-select>
-              </v-col>
               <v-col cols="12" md="2">
                 <v-btn variant="text" prepend-icon="mdi-refresh" @click="refreshData" class="mt-1">
                   刷新
@@ -37,7 +33,8 @@
 
             <!-- 任务列表 -->
             <v-data-table :headers="headers" :items="filteredTasks" :loading="loading"
-              :sort-by="[{ key: sortBy, order: 'desc' }]" class="elevation-1">
+              class="elevation-1 special-table" ref="specialTable"
+              id="task-manage-view-special-table" :data-scrolled="scrollLeft > 0" @scroll="handleScroll" items-per-page-text="每页显示">
               <template v-slot:[`header.status`]>
                 <div class="text-center">任务状态</div>
               </template>
@@ -335,6 +332,7 @@ const router = useRouter();
 
 // 响应式数据
 const loading = ref(false);
+const scrollLeft = ref(100);
 const saving = ref(false);
 const deleting = ref(false);
 const showTaskDialog = ref(false);
@@ -343,9 +341,9 @@ const showDeleteDialog = ref(false);
 const taskFormValid = ref(false);
 const searchKeyword = ref("");
 const statusFilter = ref("");
-const sortBy = ref("createdAt");
 const editingTask = ref<Task | null>(null);
 const taskToDelete = ref<Task | null>(null);
+const specialTable = ref<HTMLDivElement | null>(null);
 
 // 表格列定义
 const headers = [
@@ -366,13 +364,6 @@ const statusOptions = [
   { title: "运行中", value: "running" },
   { title: "已完成", value: "completed" },
   { title: "失败", value: "failed" }
-];
-
-const sortOptions = [
-  { title: "创建时间", value: "createdAt" },
-  { title: "更新时间", value: "updatedAt" },
-  { title: "任务名称", value: "name" },
-  { title: "进度", value: "progress" }
 ];
 
 // 可用数据集和模型（从相应的管理页面获取）
@@ -486,6 +477,14 @@ const filteredTasks = computed(() => {
 });
 
 // 方法
+const handleScroll = () => {
+  const scrollContainer = document.querySelector("#task-manage-view-special-table.special-table .v-table__wrapper");
+  if (scrollContainer) {
+    scrollLeft.value = scrollContainer.scrollWidth - scrollContainer.clientWidth - scrollContainer.scrollLeft;
+    console.log(scrollLeft.value);
+  }
+};
+
 const getStatusColor = (status: string) => {
   const colors = {
     pending: "warning",
@@ -548,6 +547,7 @@ const refreshData = () => {
   loading.value = true;
   setTimeout(() => {
     loading.value = false;
+    handleScroll();
   }, 1000);
 };
 
@@ -654,6 +654,15 @@ const confirmDelete = async () => {
 };
 
 onMounted(() => {
+  if (specialTable.value) {
+    console.log(specialTable.value);
+    document.querySelector("#task-manage-view-special-table.special-table .v-table__wrapper")?.addEventListener("scroll", handleScroll);
+  }
+  handleScroll();
+
+  // 添加resize事件监听器
+  window.addEventListener("resize", handleScroll);
+
   refreshData();
 });
 </script>
@@ -692,5 +701,13 @@ td:has(.fixed-right)::before {
   z-index: 2;
   /* 从左到右由透明（淡）渐变到微暗（深），可根据主题调整颜色/透明度 */
   background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(0, 0, 0, 0.06));
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+/* 当有横向滚动时显示渐变 */
+.v-data-table[data-scrolled="true"] th:has(.fixed-right)::before,
+.v-data-table[data-scrolled="true"] td:has(.fixed-right)::before {
+  opacity: 1;
 }
 </style>

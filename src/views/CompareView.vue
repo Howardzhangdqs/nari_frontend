@@ -1,270 +1,285 @@
 <template>
-  <v-stepper :items="['模型选择', '指标对比', '详细分析']" next-text="下一步" prev-text="上一步" v-model="currentStep">
-    <!-- 第一步：模型选择 -->
-    <template v-slot:[`item.1`]>
-      <v-card title="模型对比配置" flat>
-        <v-card-text>
-          <v-row>
-            <v-col cols="12" md="6">
-              <v-card variant="outlined" class="pa-4">
-                <v-card-title class="text-h6 pa-0 mb-3">选择对比模型</v-card-title>
-                <div class="child-mbm-3">
-                  <div class="" v-for="model in availableModels" :key="model.id" @click="updateClickedModel(model.id)">
-                    <v-checkbox v-model="selectedModels" :value="model.id" :label="model.name"
-                      :disabled="model.status !== 'trained'" class="select-none">
-                      <template v-slot:append>
-                        <v-chip :color="model.status === 'trained' ? 'success' : 'warning'" size="small" class="ml-2">
-                          {{ model.status === 'trained' ? '已训练' : '未训练' }}
-                        </v-chip>
-                      </template>
-                    </v-checkbox>
+  <v-container fluid>
+    <!-- 返回按钮 -->
+    <v-row class="mb-4">
+      <v-col cols="12">
+        <v-btn variant="text" prepend-icon="mdi-arrow-left" @click="goBack" class="text-none">
+          返回任务管理
+        </v-btn>
+      </v-col>
+    </v-row>
+
+    <v-stepper :items="['模型选择', '指标对比', '详细分析']" next-text="下一步" prev-text="上一步" v-model="currentStep">
+      <!-- 第一步：模型选择 -->
+      <template v-slot:[`item.1`]>
+        <v-card title="模型对比配置" flat>
+          <v-card-text>
+            <v-row>
+              <v-col cols="12" md="6">
+                <v-card variant="outlined" class="pa-4">
+                  <v-card-title class="text-h6 pa-0 mb-3">选择对比模型</v-card-title>
+                  <div class="child-mbm-3">
+                    <div class="" v-for="model in availableModels" :key="model.id"
+                      @click="updateClickedModel(model.id)">
+                      <v-checkbox v-model="selectedModels" :value="model.id" :label="model.name"
+                        :disabled="model.status !== 'trained'" class="select-none">
+                        <template v-slot:append>
+                          <v-chip :color="model.status === 'trained' ? 'success' : 'warning'" size="small" class="ml-2">
+                            {{ model.status === 'trained' ? '已训练' : '未训练' }}
+                          </v-chip>
+                        </template>
+                      </v-checkbox>
+                    </div>
                   </div>
-                </div>
-              </v-card>
-            </v-col>
-
-            <v-col cols="12" md="6">
-              <v-card variant="outlined" class="pa-4">
-                <v-card-title class="text-h6 pa-0 mb-3">对比配置</v-card-title>
-                <v-select v-model="compareMetrics" :items="metricOptions" label="选择对比指标" multiple chips
-                  variant="outlined" density="compact" class="mb-3"></v-select>
-
-                <v-select v-model="chartType" :items="chartTypes" label="图表类型" variant="outlined" density="compact"
-                  class="mb-3"></v-select>
-
-                <v-switch v-model="showDataTable" label="显示数据表格" color="primary"></v-switch>
-              </v-card>
-            </v-col>
-          </v-row>
-
-          <v-row class="mt-4">
-            <v-col cols="12">
-              <v-alert v-if="selectedModels.length < 2" type="warning" variant="outlined" class="mb-4">
-                请至少选择两个已训练的模型进行对比
-              </v-alert>
-
-              <v-btn color="primary" :disabled="selectedModels.length < 2" @click="generateComparison"
-                :loading="isGenerating">
-                生成对比分析
-              </v-btn>
-            </v-col>
-          </v-row>
-        </v-card-text>
-      </v-card>
-    </template>
-
-    <!-- 第二步：指标对比 -->
-    <template v-slot:[`item.2`]>
-      <v-card flat>
-        <v-card-text>
-          <!-- 数据表格 -->
-          <v-card v-if="showDataTable" variant="flat" class="mb-6">
-            <v-card-title class="text-h6">性能指标对比表</v-card-title>
-            <v-card-text>
-              <v-data-table :headers="headers" :items="filteredMetrics" class="elevation-1" :items-per-page="10"
-                hide-default-footer>
-                <template v-slot:[`item.model`]="{ item }">
-                  <v-chip :color="getModelColor(item.model)" size="small">
-                    {{ item.model }}
-                  </v-chip>
-                </template>
-                <template v-slot:[`item.rmse`]="{ item }">
-                  <span :class="getBestValueClass('rmse', item.rmse)">
-                    {{ item.rmse.toFixed(4) }}
-                  </span>
-                </template>
-                <template v-slot:[`item.mae`]="{ item }">
-                  <span :class="getBestValueClass('mae', item.mae)">
-                    {{ item.mae.toFixed(4) }}
-                  </span>
-                </template>
-                <template v-slot:[`item.r2`]="{ item }">
-                  <span :class="getBestValueClass('r2', item.r2)">
-                    {{ item.r2.toFixed(4) }}
-                  </span>
-                </template>
-              </v-data-table>
-            </v-card-text>
-          </v-card>
-
-          <!-- 可视化图表 -->
-          <v-card variant="flat">
-            <v-card-title class="text-h6">性能指标可视化</v-card-title>
-            <v-card-text>
-              <v-row>
-                <v-col cols="12" md="6" lg="6" xl="3">
-                  <div ref="rmseChart" style="height:400px; margin:auto"></div>
-                </v-col>
-                <v-col cols="12" md="6" lg="6" xl="3">
-                  <div ref="maeR2Chart" style="height:400px; margin:auto"></div>
-                </v-col>
-                <v-col cols="12" md="12" lg="12" xl="6">
-                  <div ref="predictionChart" style="height:400px; margin:auto"></div>
-                </v-col>
-              </v-row>
-            </v-card-text>
-          </v-card>
-        </v-card-text>
-      </v-card>
-    </template>
-
-    <!-- 第三步：详细分析 -->
-    <template v-slot:[`item.3`]>
-      <v-card title="详细分析报告" flat>
-        <v-card-text>
-          <v-row>
-            <!-- 最佳模型推荐 -->
-            <v-col cols="12" md="6">
-              <v-card class="pa-4">
-                <v-card-title class="text-h6 pa-0 mb-3">
-                  <v-icon class="mr-2" color="success">mdi-trophy</v-icon>
-                  最佳模型推荐
-                </v-card-title>
-                <v-card v-if="bestModel" color="success" variant="tonal" class="pa-3">
-                  <div class="text-h6 mb-2">{{ bestModel.model }}</div>
-                  <div class="text-body-2 mb-2">综合评分: {{ bestModel.score.toFixed(2) }}</div>
-                  <v-chip-group>
-                    <v-chip size="small" color="success">RMSE: {{ bestModel.rmse.toFixed(4) }}</v-chip>
-                    <v-chip size="small" color="success">MAE: {{ bestModel.mae.toFixed(4) }}</v-chip>
-                    <v-chip size="small" color="success">R²: {{ bestModel.r2.toFixed(4) }}</v-chip>
-                  </v-chip-group>
                 </v-card>
-              </v-card>
-            </v-col>
+              </v-col>
 
-            <!-- 模型排名 -->
-            <v-col cols="12" md="6">
-              <v-card class="pa-4">
-                <v-card-title class="text-h6 pa-0 mb-3">
-                  <v-icon class="mr-2" color="primary">mdi-podium</v-icon>
-                  模型排名
-                </v-card-title>
-                <v-list>
-                  <v-list-item v-for="(model, index) in rankedModels" :key="model.model" class="px-0">
-                    <template v-slot:prepend>
-                      <v-avatar :color="index === 0 ? 'gold' : index === 1 ? 'silver' : 'bronze'" size="24">
-                        <span class="text-caption">{{ index + 1 }}</span>
-                      </v-avatar>
-                    </template>
-                    <v-list-item-title>{{ model.model }}</v-list-item-title>
-                    <v-list-item-subtitle>综合评分: {{ model.score.toFixed(2) }}</v-list-item-subtitle>
-                  </v-list-item>
-                </v-list>
-              </v-card>
-            </v-col>
-          </v-row>
+              <v-col cols="12" md="6">
+                <v-card variant="outlined" class="pa-4">
+                  <v-card-title class="text-h6 pa-0 mb-3">对比配置</v-card-title>
+                  <v-select v-model="compareMetrics" :items="metricOptions" label="选择对比指标" multiple chips
+                    variant="outlined" density="compact" class="mb-3"></v-select>
 
-          <!-- 详细分析 -->
-          <v-row class="mt-4">
-            <v-col cols="12">
-              <v-card class="pa-4">
-                <v-card-title class="text-h6 pa-0 mb-3">
-                  <v-icon class="mr-2" color="info">mdi-chart-line</v-icon>
-                  性能分析总结
-                </v-card-title>
+                  <v-select v-model="chartType" :items="chartTypes" label="图表类型" variant="outlined" density="compact"
+                    class="mb-3"></v-select>
+
+                  <v-switch v-model="showDataTable" label="显示数据表格" color="primary"></v-switch>
+                </v-card>
+              </v-col>
+            </v-row>
+
+            <v-row class="mt-4">
+              <v-col cols="12">
+                <v-alert v-if="selectedModels.length < 2" type="warning" variant="outlined" class="mb-4">
+                  请至少选择两个已训练的模型进行对比
+                </v-alert>
+
+                <v-btn color="primary" :disabled="selectedModels.length < 2" @click="generateComparison"
+                  :loading="isGenerating">
+                  生成对比分析
+                </v-btn>
+              </v-col>
+            </v-row>
+          </v-card-text>
+        </v-card>
+      </template>
+
+      <!-- 第二步：指标对比 -->
+      <template v-slot:[`item.2`]>
+        <v-card flat>
+          <v-card-text>
+            <!-- 数据表格 -->
+            <v-card v-if="showDataTable" variant="flat" class="mb-6">
+              <v-card-title class="text-h6">性能指标对比表</v-card-title>
+              <v-card-text>
+                <v-data-table :headers="headers" :items="filteredMetrics" class="elevation-1" :items-per-page="10"
+                  hide-default-footer items-per-page-text="每页显示">
+                  <template v-slot:[`item.model`]="{ item }">
+                    <v-chip :color="getModelColor(item.model)" size="small">
+                      {{ item.model }}
+                    </v-chip>
+                  </template>
+                  <template v-slot:[`item.rmse`]="{ item }">
+                    <span :class="getBestValueClass('rmse', item.rmse)">
+                      {{ item.rmse.toFixed(4) }}
+                    </span>
+                  </template>
+                  <template v-slot:[`item.mae`]="{ item }">
+                    <span :class="getBestValueClass('mae', item.mae)">
+                      {{ item.mae.toFixed(4) }}
+                    </span>
+                  </template>
+                  <template v-slot:[`item.r2`]="{ item }">
+                    <span :class="getBestValueClass('r2', item.r2)">
+                      {{ item.r2.toFixed(4) }}
+                    </span>
+                  </template>
+                </v-data-table>
+              </v-card-text>
+            </v-card>
+
+            <!-- 可视化图表 -->
+            <v-card variant="flat">
+              <v-card-title class="text-h6">性能指标可视化</v-card-title>
+              <v-card-text>
                 <v-row>
-                  <v-col col="12" xl="4" lg="6" md="12" sm="12" v-for="analysis in performanceAnalysis"
-                    :key="analysis.metric">
-                    <v-expansion-panels>
-                      <v-expansion-panel :title="analysis.title" :model-value="true">
+                  <v-col cols="12" md="6" lg="6" xl="3">
+                    <div ref="rmseChart" style="height:400px; margin:auto"></div>
+                  </v-col>
+                  <v-col cols="12" md="6" lg="6" xl="3">
+                    <div ref="maeR2Chart" style="height:400px; margin:auto"></div>
+                  </v-col>
+                  <v-col cols="12" md="12" lg="12" xl="6">
+                    <div ref="predictionChart" style="height:400px; margin:auto"></div>
+                  </v-col>
+                </v-row>
+              </v-card-text>
+            </v-card>
+          </v-card-text>
+        </v-card>
+      </template>
+
+      <!-- 第三步：详细分析 -->
+      <template v-slot:[`item.3`]>
+        <v-card title="详细分析报告" flat>
+          <v-card-text>
+            <v-row>
+              <!-- 最佳模型推荐 -->
+              <v-col cols="12" md="6">
+                <v-card class="pa-4">
+                  <v-card-title class="text-h6 pa-0 mb-3">
+                    <v-icon class="mr-2" color="success">mdi-trophy</v-icon>
+                    最佳模型推荐
+                  </v-card-title>
+                  <v-card v-if="bestModel" color="success" variant="tonal" class="pa-3">
+                    <div class="text-h6 mb-2">{{ bestModel.model }}</div>
+                    <div class="text-body-2 mb-2">综合评分: {{ bestModel.score.toFixed(2) }}</div>
+                    <v-chip-group>
+                      <v-chip size="small" color="success">RMSE: {{ bestModel.rmse.toFixed(4) }}</v-chip>
+                      <v-chip size="small" color="success">MAE: {{ bestModel.mae.toFixed(4) }}</v-chip>
+                      <v-chip size="small" color="success">R²: {{ bestModel.r2.toFixed(4) }}</v-chip>
+                    </v-chip-group>
+                  </v-card>
+                </v-card>
+              </v-col>
+
+              <!-- 模型排名 -->
+              <v-col cols="12" md="6">
+                <v-card class="pa-4">
+                  <v-card-title class="text-h6 pa-0 mb-3">
+                    <v-icon class="mr-2" color="primary">mdi-podium</v-icon>
+                    模型排名
+                  </v-card-title>
+                  <v-list>
+                    <v-list-item v-for="(model, index) in rankedModels" :key="model.model" class="px-0">
+                      <template v-slot:prepend>
+                        <v-avatar :color="index === 0 ? 'gold' : index === 1 ? 'silver' : 'bronze'" size="24">
+                          <span class="text-caption">{{ index + 1 }}</span>
+                        </v-avatar>
+                      </template>
+                      <v-list-item-title>{{ model.model }}</v-list-item-title>
+                      <v-list-item-subtitle>综合评分: {{ model.score.toFixed(2) }}</v-list-item-subtitle>
+                    </v-list-item>
+                  </v-list>
+                </v-card>
+              </v-col>
+            </v-row>
+
+            <!-- 详细分析 -->
+            <v-row class="mt-4">
+              <v-col cols="12">
+                <v-card class="pa-4">
+                  <v-card-title class="text-h6 pa-0 mb-3">
+                    <v-icon class="mr-2" color="info">mdi-chart-line</v-icon>
+                    性能分析总结
+                  </v-card-title>
+                  <v-row>
+                    <v-col col="12" xl="4" lg="6" md="12" sm="12" v-for="analysis in performanceAnalysis"
+                      :key="analysis.metric">
+                      <v-expansion-panels>
+                        <v-expansion-panel :title="analysis.title" :model-value="true">
+                          <v-expansion-panel-text>
+                            <div class="text-body-1 mb-3">{{ analysis.description }}</div>
+                            <v-alert :type="analysis.recommendation.type" variant="outlined" class="mb-2">
+                              <strong>建议：</strong>{{ analysis.recommendation.text }}
+                            </v-alert>
+                          </v-expansion-panel-text>
+                        </v-expansion-panel>
+                      </v-expansion-panels>
+                    </v-col>
+                  </v-row>
+                </v-card>
+              </v-col>
+            </v-row>
+
+            <!-- 模型导出功能 -->
+            <v-row class="mt-4">
+              <v-col cols="12">
+                <v-card class="pa-4">
+                  <v-card-title class="text-h6 pa-0 mb-3">
+                    <v-icon class="mr-2" color="primary">mdi-download</v-icon>
+                    模型导出
+                  </v-card-title>
+                  <v-card-text class="pa-0">
+                    <div class="text-body-2 mb-4 text-medium-emphasis">
+                      选择需要导出的模型和导出类型，支持导出训练好的模型文件、配置参数和模型定义文件。
+                    </div>
+
+                    <!-- 模型选择 -->
+                    <v-row class="mb-1">
+                      <v-col cols="12" md="6">
+                        <v-select v-model="selectedExportModels" :items="filteredMetrics" item-title="model"
+                          item-value="model" label="选择要导出的模型" multiple chips variant="outlined" hint="可选择多个模型进行批量导出"
+                          persistent-hint></v-select>
+                      </v-col>
+                      <v-col cols="12" md="6">
+                        <v-select v-model="exportFormat" :items="exportFormats" label="导出格式" variant="outlined"
+                          hint="选择模型文件的导出格式" persistent-hint></v-select>
+                      </v-col>
+                    </v-row>
+
+
+                    <!-- 导出选项 -->
+                    <v-expansion-panels class="mb-4" variant="accordion">
+                      <v-expansion-panel title="高级导出选项">
                         <v-expansion-panel-text>
-                          <div class="text-body-1 mb-3">{{ analysis.description }}</div>
-                          <v-alert :type="analysis.recommendation.type" variant="outlined" class="mb-2">
-                            <strong>建议：</strong>{{ analysis.recommendation.text }}
-                          </v-alert>
+                          <v-row>
+                            <v-col cols="12" md="6">
+                              <v-checkbox v-model="exportOptions.includeWeights" label="包含模型权重" density="compact"
+                                hint="导出训练好的模型权重参数"></v-checkbox>
+                              <v-checkbox v-model="exportOptions.includeOptimizer" label="包含优化器状态" density="compact"
+                                hint="导出优化器的状态信息"></v-checkbox>
+                              <v-checkbox v-model="exportOptions.includeMetrics" label="包含性能指标" density="compact"
+                                hint="导出模型的性能评估指标"></v-checkbox>
+                            </v-col>
+                            <v-col cols="12" md="6">
+                              <v-checkbox v-model="exportOptions.compressFiles" label="压缩导出文件" density="compact"
+                                hint="将导出文件打包为ZIP格式"></v-checkbox>
+                              <v-checkbox v-model="exportOptions.includeDocumentation" label="包含文档说明" density="compact"
+                                hint="生成模型使用说明文档"></v-checkbox>
+                              <v-text-field v-model="exportOptions.version" label="版本号" variant="outlined"
+                                density="compact" hint="为导出的模型指定版本号"></v-text-field>
+                            </v-col>
+                          </v-row>
                         </v-expansion-panel-text>
                       </v-expansion-panel>
                     </v-expansion-panels>
-                  </v-col>
-                </v-row>
-              </v-card>
-            </v-col>
-          </v-row>
 
-          <!-- 模型导出功能 -->
-          <v-row class="mt-4">
-            <v-col cols="12">
-              <v-card class="pa-4">
-                <v-card-title class="text-h6 pa-0 mb-3">
-                  <v-icon class="mr-2" color="primary">mdi-download</v-icon>
-                  模型导出
-                </v-card-title>
-                <v-card-text class="pa-0">
-                  <div class="text-body-2 mb-4 text-medium-emphasis">
-                    选择需要导出的模型和导出类型，支持导出训练好的模型文件、配置参数和模型定义文件。
-                  </div>
-
-                  <!-- 模型选择 -->
-                  <v-row class="mb-1">
-                    <v-col cols="12" md="6">
-                      <v-select v-model="selectedExportModels" :items="filteredMetrics" item-title="model"
-                        item-value="model" label="选择要导出的模型" multiple chips variant="outlined" hint="可选择多个模型进行批量导出"
-                        persistent-hint></v-select>
-                    </v-col>
-                    <v-col cols="12" md="6">
-                      <v-select v-model="exportFormat" :items="exportFormats" label="导出格式" variant="outlined"
-                        hint="选择模型文件的导出格式" persistent-hint></v-select>
-                    </v-col>
-                  </v-row>
+                    <!-- 导出按钮组 -->
+                    <div class="d-flex flex-wrap gap-3">
+                      <v-btn @click="exportModelFiles" prepend-icon="mdi-brain" color="primary"
+                        :disabled="selectedExportModels.length === 0" :loading="isExportingModels">
+                        导出模型文件
+                      </v-btn>
+                      <v-btn @click="exportModelConfigs" prepend-icon="mdi-cog" color="success"
+                        :disabled="selectedExportModels.length === 0" :loading="isExportingConfigs">
+                        导出配置参数
+                      </v-btn>
+                      <v-btn @click="exportModelDefinitions" prepend-icon="mdi-code-json" color="info"
+                        :disabled="selectedExportModels.length === 0" :loading="isExportingDefinitions">
+                        导出定义文件
+                      </v-btn>
+                    </div>
 
 
-                  <!-- 导出选项 -->
-                  <v-expansion-panels class="mb-4" variant="accordion">
-                    <v-expansion-panel title="高级导出选项">
-                      <v-expansion-panel-text>
-                        <v-row>
-                          <v-col cols="12" md="6">
-                            <v-checkbox v-model="exportOptions.includeWeights" label="包含模型权重" density="compact"
-                              hint="导出训练好的模型权重参数"></v-checkbox>
-                            <v-checkbox v-model="exportOptions.includeOptimizer" label="包含优化器状态" density="compact"
-                              hint="导出优化器的状态信息"></v-checkbox>
-                            <v-checkbox v-model="exportOptions.includeMetrics" label="包含性能指标" density="compact"
-                              hint="导出模型的性能评估指标"></v-checkbox>
-                          </v-col>
-                          <v-col cols="12" md="6">
-                            <v-checkbox v-model="exportOptions.compressFiles" label="压缩导出文件" density="compact"
-                              hint="将导出文件打包为ZIP格式"></v-checkbox>
-                            <v-checkbox v-model="exportOptions.includeDocumentation" label="包含文档说明" density="compact"
-                              hint="生成模型使用说明文档"></v-checkbox>
-                            <v-text-field v-model="exportOptions.version" label="版本号" variant="outlined"
-                              density="compact" hint="为导出的模型指定版本号"></v-text-field>
-                          </v-col>
-                        </v-row>
-                      </v-expansion-panel-text>
-                    </v-expansion-panel>
-                  </v-expansion-panels>
-
-                  <!-- 导出按钮组 -->
-                  <div class="d-flex flex-wrap gap-3">
-                    <v-btn @click="exportModelFiles" prepend-icon="mdi-brain" color="primary"
-                      :disabled="selectedExportModels.length === 0" :loading="isExportingModels">
-                      导出模型文件
-                    </v-btn>
-                    <v-btn @click="exportModelConfigs" prepend-icon="mdi-cog" color="success"
-                      :disabled="selectedExportModels.length === 0" :loading="isExportingConfigs">
-                      导出配置参数
-                    </v-btn>
-                    <v-btn @click="exportModelDefinitions" prepend-icon="mdi-code-json" color="info"
-                      :disabled="selectedExportModels.length === 0" :loading="isExportingDefinitions">
-                      导出定义文件
-                    </v-btn>
-                  </div>
-
-
-                </v-card-text>
-              </v-card>
-            </v-col>
-          </v-row>
-        </v-card-text>
-      </v-card>
-    </template>
-  </v-stepper>
+                  </v-card-text>
+                </v-card>
+              </v-col>
+            </v-row>
+          </v-card-text>
+        </v-card>
+      </template>
+    </v-stepper>
+  </v-container>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from "vue";
+import { useRouter } from "vue-router";
 import * as echarts from "echarts";
 import { registChart } from "@/resize_charts";
+
+const router = useRouter();
 
 interface Metric {
   model: string;
@@ -857,6 +872,11 @@ onMounted(() => {
     setTimeout(initializeCharts, 100);
   }
 });
+
+// 返回任务管理页面
+const goBack = () => {
+  router.push({ name: "tasks" });
+};
 </script>
 
 <style scoped>

@@ -1,5 +1,14 @@
 <template>
   <v-container fluid>
+    <!-- 返回按钮 -->
+    <v-row class="mb-4">
+      <v-col cols="12">
+        <v-btn variant="text" prepend-icon="mdi-arrow-left" @click="goBack" class="text-none">
+          返回任务管理
+        </v-btn>
+      </v-col>
+    </v-row>
+
     <v-row>
       <v-col cols="12">
         <v-card title="模型训练实时监控" flat>
@@ -61,10 +70,13 @@
 <script lang="ts" setup>
 import { Chart as ChartJS, Title, Tooltip, Legend, LineElement, CategoryScale, LinearScale, PointElement } from "chart.js";
 import { ref, computed, onMounted, nextTick } from "vue";
+import { useRouter } from "vue-router";
 import ModelTrainer from "@/components/ModelTrainer.vue";
 import TrainingSummary from "@/components/TrainingSummary.vue";
 
 ChartJS.register(Title, Tooltip, Legend, LineElement, CategoryScale, LinearScale, PointElement);
+
+const router = useRouter();
 
 // 训练参数（可从 TrainView 传递或从全局状态获取）
 const trainParams = ref({
@@ -201,6 +213,11 @@ const onModelCompleted = (modelId: number) => {
   if (completedModels.value === selectedAiModels.value.length) {
     isAnyTraining.value = false;
   }
+};
+
+// 返回任务管理页面
+const goBack = () => {
+  router.push({ name: "tasks" });
 };
 
 // 页面挂载时可以从路由参数或全局状态加载选中的模型

@@ -1,5 +1,15 @@
 <template>
-  <v-stepper :items="['参数配置', '模型选择']" next-text="下一步" prev-text="上一步" v-model="currentStep">
+  <v-container fluid>
+    <!-- 返回按钮 -->
+    <v-row class="mb-4">
+      <v-col cols="12">
+        <v-btn variant="text" prepend-icon="mdi-arrow-left" @click="goBack" class="text-none">
+          返回任务管理
+        </v-btn>
+      </v-col>
+    </v-row>
+    
+    <v-stepper :items="['参数配置', '模型选择']" next-text="下一步" prev-text="上一步" v-model="currentStep">
     <!-- 第一步：参数配置 -->
     <template v-slot:[`item.1`]>
       <v-card title="模型训练参数配置" flat>
@@ -209,6 +219,7 @@
       </v-card>
     </template>
   </v-stepper>
+  </v-container>
 </template>
 
 <script lang="ts" setup>
@@ -435,5 +446,10 @@ const startTraining = () => {
 
 const goToMonitor = () => {
   router.push("/monitor");
+};
+
+// 返回任务管理页面
+const goBack = () => {
+  router.push({ name: "task-manage" });
 };
 </script>

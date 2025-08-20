@@ -36,8 +36,9 @@
             </v-row>
 
             <!-- 模型列表 -->
-            <v-data-table :headers="headers" :items="filteredModels" :loading="isLoading" class="elevation-1"
-              :items-per-page="10" items-per-page-text="每页显示">
+            <v-data-table :headers="headers" :items="filteredModels" :loading="isLoading"
+              class="elevation-1 special-table" ref="specialTable" :items-per-page="10" items-per-page-text="每页显示"
+              id="model-manage-view-special-table" :data-scrolled="scrollLeft > 0" @scroll="handleScroll">
               <template v-slot:[`header.type`]>
                 <div class="text-center">模型类型</div>
               </template>
@@ -302,6 +303,7 @@ interface Model {
 
 // 响应式数据
 const isLoading = ref(false);
+const scrollLeft = ref(100);
 const isSaving = ref(false);
 const isDeleting = ref(false);
 const searchQuery = ref("");
@@ -314,6 +316,7 @@ const selectedModel = ref<Model | null>(null);
 const modelToDelete = ref<Model | null>(null);
 const editingModel = ref<Model | null>(null);
 const isFormValid = ref(false);
+const specialTable = ref<HTMLDivElement | null>(null);
 
 // 消息提示
 const showMessage = ref(false);
@@ -502,6 +505,14 @@ const formatDate = (date: Date) => {
 };
 
 // 方法
+const handleScroll = () => {
+  const scrollContainer = document.querySelector("#model-manage-view-special-table.special-table .v-table__wrapper");
+  if (scrollContainer) {
+    scrollLeft.value = scrollContainer.scrollWidth - scrollContainer.clientWidth - scrollContainer.scrollLeft;
+    console.log(scrollLeft.value);
+  }
+};
+
 const clearFilters = () => {
   searchQuery.value = "";
   filterType.value = "";
@@ -576,7 +587,8 @@ const saveModel = async () => {
         ...modelForm.value,
         status: "inactive",
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        usageCount: 0
       };
       models.value.push(newModel);
       showMessage.value = true;
@@ -646,7 +658,16 @@ const exportModel = (model: Model) => {
 
 // 生命周期
 onMounted(() => {
-  // 可以在这里加载模型数据
+  if (specialTable.value) {
+    console.log(specialTable.value);
+    document.querySelector("#model-manage-view-special-table.special-table .v-table__wrapper")?.addEventListener("scroll", handleScroll);
+  }
+  handleScroll();
+  
+  // 添加resize事件监听器
+  window.addEventListener("resize", handleScroll);
+  
+  setInterval(handleScroll, 1000);
 });
 </script>
 
@@ -684,5 +705,13 @@ td:has(.fixed-right)::before {
   z-index: 2;
   /* 从左到右由透明（淡）渐变到微暗（深），可根据主题调整颜色/透明度 */
   background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(0, 0, 0, 0.06));
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+/* 当有横向滚动时显示渐变 */
+.v-data-table[data-scrolled="true"] th:has(.fixed-right)::before,
+.v-data-table[data-scrolled="true"] td:has(.fixed-right)::before {
+  opacity: 1;
 }
 </style>

@@ -43,7 +43,8 @@
               </v-row>
 
               <v-data-table :headers="userHeaders" :items="filteredUsers" :loading="loading"
-                class="elevation-1 admin-table">
+                class="elevation-1 admin-table special-table" ref="specialUserTable" id="admin-user-table"
+                :data-scrolled="scrollLeft > 0" @scroll="handleScroll" items-per-page-text="每页显示">
                 <!-- 用户管理表头 -->
                 <template v-slot:[`header.role`]>
                   <div class="text-center">角色</div>
@@ -62,7 +63,7 @@
                 </template>
 
                 <template v-slot:[`header.actions`]>
-                  <div class="text-end">操作</div>
+                  <div class="text-left fixed-right">操作</div>
                 </template>
 
                 <!-- 用户信息 -->
@@ -114,7 +115,7 @@
 
                 <!-- 用户操作 -->
                 <template v-slot:[`item.actions`]="{ item }">
-                  <div class="d-flex gap-2 justify-end align-center">
+                  <div class="d-flex gap-2 fixed-right">
                     <v-btn size="small" variant="text" color="primary" icon="mdi-eye" @click="viewUserDetails(item)">
                       <v-icon>mdi-eye</v-icon>
                       <v-tooltip activator="parent">查看详情</v-tooltip>
@@ -150,7 +151,8 @@
               </v-row>
 
               <v-data-table :headers="datasetHeaders" :items="filteredDatasets" :loading="loading"
-                class="elevation-1 admin-table">
+                class="elevation-1 admin-table special-table" ref="specialDatasetTable" id="admin-dataset-table"
+                :data-scrolled="scrollLeft > 0" @scroll="handleScroll" items-per-page-text="每页显示">
                 <!-- 自定义表头 -->
                 <template v-slot:[`header.owner`]>
                   <div class="text-left ml-6">所有者</div>
@@ -169,7 +171,7 @@
                 </template>
 
                 <template v-slot:[`header.actions`]>
-                  <div class="text-end">操作</div>
+                  <div class="text-left fixed-right">操作</div>
                 </template>
                 <!-- 数据集信息 -->
                 <template v-slot:[`item.dataset`]="{ item }">
@@ -213,7 +215,7 @@
 
                 <!-- 数据集操作 -->
                 <template v-slot:[`item.actions`]="{ item }">
-                  <div class="d-flex gap-2 justify-end align-center">
+                  <div class="d-flex gap-2 fixed-right">
                     <v-btn size="small" variant="text" color="primary" icon="mdi-eye" @click="viewDatasetDetails(item)">
                       <v-icon>mdi-eye</v-icon>
                       <v-tooltip activator="parent">查看详情</v-tooltip>
@@ -318,6 +320,7 @@ interface AdminDataset {
 
 // 响应式数据
 const loading = ref(false);
+const scrollLeft = ref(100);
 const viewMode = ref("users");
 const userSearchKeyword = ref("");
 const roleFilter = ref("");
@@ -329,6 +332,8 @@ const ownerFilter = ref("");
 // 图表引用
 const userActivityChart = ref<HTMLDivElement | null>(null);
 const trainingTrendChart = ref<HTMLDivElement | null>(null);
+const specialUserTable = ref<HTMLDivElement | null>(null);
+const specialDatasetTable = ref<HTMLDivElement | null>(null);
 
 // 表格列定义
 const userHeaders = [
@@ -507,6 +512,20 @@ const successRate = computed(() => {
 });
 
 // 方法
+const handleScroll = () => {
+  // 处理用户表格滚动
+  const userScrollContainer = document.querySelector("#admin-user-table.special-table .v-table__wrapper");
+  if (userScrollContainer && viewMode.value === "users") {
+    scrollLeft.value = userScrollContainer.scrollWidth - userScrollContainer.clientWidth - userScrollContainer.scrollLeft;
+  }
+
+  // 处理数据集表格滚动
+  const datasetScrollContainer = document.querySelector("#admin-dataset-table.special-table .v-table__wrapper");
+  if (datasetScrollContainer && viewMode.value === "datasets") {
+    scrollLeft.value = datasetScrollContainer.scrollWidth - datasetScrollContainer.clientWidth - datasetScrollContainer.scrollLeft;
+  }
+};
+
 const getRoleColor = (role: string) => {
   const colors = {
     administrator: "error",
@@ -672,6 +691,24 @@ onMounted(() => {
   if (viewMode.value === "statistics") {
     initializeCharts();
   }
+
+  // 为两个表格添加滚动监听
+  setTimeout(() => {
+    const userTableWrapper = document.querySelector("#admin-user-table.special-table .v-table__wrapper");
+    if (userTableWrapper) {
+      userTableWrapper.addEventListener("scroll", handleScroll);
+    }
+
+    const datasetTableWrapper = document.querySelector("#admin-dataset-table.special-table .v-table__wrapper");
+    if (datasetTableWrapper) {
+      datasetTableWrapper.addEventListener("scroll", handleScroll);
+    }
+
+    handleScroll();
+  }, 100);
+
+  // 添加resize事件监听器
+  window.addEventListener("resize", handleScroll);
 });
 </script>
 
@@ -690,5 +727,44 @@ onMounted(() => {
 
 .v-data-table {
   border-radius: 8px;
+}
+</style>
+
+<style>
+/* 将样式应用到包含 .fixed-right 元素的父单元格（表头/表格单元格） */
+th:has(.fixed-right),
+td:has(.fixed-right) {
+  position: sticky;
+  right: 0;
+  top: 0;
+  background-color: #ffffff;
+  z-index: 1;
+  padding-right: 8px;
+  overflow: visible;
+  /* 允许伪元素溢出显示渐变 */
+}
+
+/* 在固定列左侧添加从淡到深的渐变（左侧由淡变深） */
+th:has(.fixed-right)::before,
+td:has(.fixed-right)::before {
+  content: "";
+  position: absolute;
+  left: -24px;
+  /* 渐变区域宽度，可调整 */
+  top: 0;
+  bottom: 0;
+  width: 24px;
+  pointer-events: none;
+  z-index: 2;
+  /* 从左到右由透明（淡）渐变到微暗（深），可根据主题调整颜色/透明度 */
+  background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(0, 0, 0, 0.06));
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+/* 当有横向滚动时显示渐变 */
+.v-data-table[data-scrolled="true"] th:has(.fixed-right)::before,
+.v-data-table[data-scrolled="true"] td:has(.fixed-right)::before {
+  opacity: 1;
 }
 </style>

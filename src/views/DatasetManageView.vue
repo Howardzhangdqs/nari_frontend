@@ -24,10 +24,6 @@
                 <v-select v-model="statusFilter" :items="statusOptions" label="训练状态" variant="outlined"
                   density="compact" clearable></v-select>
               </v-col>
-              <v-col cols="12" md="3">
-                <v-select v-model="sortBy" :items="sortOptions" label="排序方式" variant="outlined"
-                  density="compact"></v-select>
-              </v-col>
               <v-col cols="12" md="2">
                 <v-btn variant="text" prepend-icon="mdi-refresh" @click="refreshData" class="mt-1">
                   刷新
@@ -37,7 +33,8 @@
 
             <!-- 数据集列表 -->
             <v-data-table :headers="headers" :items="filteredDatasets" :loading="loading"
-              :sort-by="[{ key: sortBy, order: 'desc' }]" class="elevation-1 dataset-table">
+              class="elevation-1 dataset-table special-table" ref="specialTable" id="dataset-manage-view-special-table"
+              :data-scrolled="scrollLeft > 0" @scroll="handleScroll" items-per-page-text="每页显示">
               <template v-slot:[`header.dataInfo`]>
                 <div class="text-center">数据基础信息</div>
               </template>
@@ -302,7 +299,6 @@
 </template>
 
 <script setup lang="ts">
-import { Icon } from "@iconify/vue";
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 
@@ -325,6 +321,7 @@ const router = useRouter();
 
 // 响应式数据
 const loading = ref(false);
+const scrollLeft = ref(100);
 const showUploadDialog = ref(false);
 const showDataUploadDialog = ref(false);
 const showDeleteDialog = ref(false);
@@ -333,9 +330,9 @@ const deleting = ref(false);
 const uploadFormValid = ref(false);
 const searchKeyword = ref("");
 const statusFilter = ref("");
-const sortBy = ref("createdAt");
 const uploadStep = ref(1);
 const datasetToDelete = ref<Dataset | null>(null);
+const specialTable = ref<HTMLDivElement | null>(null);
 
 type HeaderAlign = "center" | "end" | "start" | undefined;
 
@@ -356,13 +353,6 @@ const statusOptions = [
   { title: "训练中", value: "training" },
   { title: "已完成", value: "completed" },
   { title: "训练失败", value: "failed" }
-];
-
-const sortOptions = [
-  { title: "创建时间", value: "createdAt" },
-  { title: "训练开始时间", value: "trainingStartedAt" },
-  { title: "完成时间", value: "completedAt" },
-  { title: "数据集名称", value: "name" }
 ];
 
 // 模拟数据
@@ -486,6 +476,14 @@ const filteredDatasets = computed(() => {
 });
 
 // 方法
+const handleScroll = () => {
+  const scrollContainer = document.querySelector("#dataset-manage-view-special-table.special-table .v-table__wrapper");
+  if (scrollContainer) {
+    scrollLeft.value = scrollContainer.scrollWidth - scrollContainer.clientWidth - scrollContainer.scrollLeft;
+    console.log(scrollLeft.value);
+  }
+};
+
 const getStatusColor = (status: string) => {
   const colors = {
     pending: "warning",
@@ -531,6 +529,7 @@ const refreshData = () => {
   loading.value = true;
   setTimeout(() => {
     loading.value = false;
+    handleScroll();
   }, 1000);
 };
 
@@ -641,6 +640,15 @@ const confirmDelete = async () => {
 };
 
 onMounted(() => {
+  if (specialTable.value) {
+    console.log(specialTable.value);
+    document.querySelector("#dataset-manage-view-special-table.special-table .v-table__wrapper")?.addEventListener("scroll", handleScroll);
+  }
+  handleScroll();
+
+  // 添加resize事件监听器
+  window.addEventListener("resize", handleScroll);
+
   refreshData();
 });
 </script>
@@ -691,5 +699,13 @@ td:has(.fixed-right)::before {
   z-index: 2;
   /* 从左到右由透明（淡）渐变到微暗（深），可根据主题调整颜色/透明度 */
   background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(0, 0, 0, 0.06));
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+/* 当有横向滚动时显示渐变 */
+.dataset-table[data-scrolled="true"] th:has(.fixed-right)::before,
+.dataset-table[data-scrolled="true"] td:has(.fixed-right)::before {
+  opacity: 1;
 }
 </style>
