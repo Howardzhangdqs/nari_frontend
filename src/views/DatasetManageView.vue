@@ -8,9 +8,14 @@
               <v-icon class="mr-2">mdi-database</v-icon>
               数据集管理
             </div>
-            <v-btn color="primary" prepend-icon="mdi-plus" @click="showUploadDialog = true">
-              上传数据集
-            </v-btn>
+            <div class="d-flex gap-2">
+              <v-btn color="secondary" prepend-icon="mdi-upload-multiple" @click="showBatchUploadDialog = true">
+                批量新增
+              </v-btn>
+              <v-btn color="primary" prepend-icon="mdi-plus" @click="showUploadDialog = true">
+                上传数据集
+              </v-btn>
+            </div>
           </v-card-title>
 
           <v-card-text>
@@ -200,6 +205,104 @@
       </v-card>
     </v-dialog>
 
+    <!-- 批量新增数据集弹窗 -->
+    <v-dialog v-model="showBatchUploadDialog" max-width="900px">
+      <v-card>
+        <v-card-title>
+          <v-icon class="mr-2">mdi-upload-multiple</v-icon>
+          批量新增数据集
+        </v-card-title>
+        <v-card-text>
+          <v-alert type="info" variant="tonal" class="mb-4">
+            请按照以下格式准备数据集信息：<br>
+            数据集名称,数据集描述,数据基础信息,创建人<br>
+            例如：电力负荷数据集-05,2024年电力负荷数据,时序数据，包含负荷、温度等特征,张工程师<br>
+            <small>注：创建人字段可留空，留空时将使用当前登录用户的用户名</small>
+          </v-alert>
+          
+          <v-tabs v-model="batchUploadTab" align-tabs="center">
+            <v-tab value="file">CSV文件上传</v-tab>
+            <v-tab value="text">CSV文本输入</v-tab>
+          </v-tabs>
+
+          <v-window v-model="batchUploadTab" class="mt-4">
+            <v-window-item value="file">
+              <v-card flat>
+                <v-card-text>
+                  <v-file-input 
+                    v-model="batchUploadFile" 
+                    accept=".csv" 
+                    label="选择CSV文件" 
+                    variant="outlined"
+                    prepend-icon="mdi-file-delimited"
+                    show-size
+                    @change="handleFileUpload"
+                  >
+                  </v-file-input>
+                  <div v-if="batchUploadPreview.length > 0" class="mt-4">
+                    <div class="text-subtitle-2 mb-2">预览数据：</div>
+                    <v-data-table
+                      :headers="previewHeaders"
+                      :items="batchUploadPreview"
+                      density="compact"
+                      class="elevation-1"
+                      hide-default-footer
+                    ></v-data-table>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-window-item>
+
+            <v-window-item value="text">
+              <v-card flat>
+                <v-card-text>
+                  <v-textarea
+                    v-model="batchUploadText"
+                    label="粘贴CSV文本"
+                    variant="outlined"
+                    rows="10"
+                    placeholder="数据集名称,数据集描述,数据基础信息,创建人（可留空）&#10;电力负荷数据集-05,2024年电力负荷数据,时序数据，包含负荷、温度等特征,张工程师"
+                    @update:model-value="parseCSVText"
+                  ></v-textarea>
+                  <div v-if="batchUploadPreview.length > 0" class="mt-4">
+                    <div class="text-subtitle-2 mb-2">预览数据：</div>
+                    <v-data-table
+                      :headers="previewHeaders"
+                      :items="batchUploadPreview"
+                      density="compact"
+                      class="elevation-1"
+                      hide-default-footer
+                    ></v-data-table>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-window-item>
+          </v-window>
+
+          <div v-if="batchUploadErrors.length > 0" class="mt-4">
+            <v-alert type="error" variant="tonal" dense>
+              <div class="text-subtitle-2 mb-2">数据验证错误：</div>
+              <ul>
+                <li v-for="(error, index) in batchUploadErrors" :key="index">{{ error }}</li>
+              </ul>
+            </v-alert>
+          </div>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn @click="resetBatchUpload">取消</v-btn>
+          <v-btn 
+            color="primary" 
+            :disabled="batchUploadPreview.length === 0 || batchUploadErrors.length > 0" 
+            @click="confirmBatchUpload"
+            :loading="batchUploading"
+          >
+            批量新增 ({{ batchUploadPreview.length }})
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- 数据集上传弹窗 -->
     <v-dialog v-model="showDataUploadDialog" max-width="800px">
       <v-card>
@@ -299,7 +402,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 
 interface Dataset {
@@ -319,20 +422,30 @@ interface Dataset {
 
 const router = useRouter();
 
+// 当前用户信息
+const currentUser = ref("admin"); // TODO: 从登录状态获取用户名
+
 // 响应式数据
 const loading = ref(false);
 const scrollLeft = ref(100);
 const showUploadDialog = ref(false);
+const showBatchUploadDialog = ref(false);
 const showDataUploadDialog = ref(false);
 const showDeleteDialog = ref(false);
 const uploading = ref(false);
+const batchUploading = ref(false);
 const deleting = ref(false);
 const uploadFormValid = ref(false);
 const searchKeyword = ref("");
 const statusFilter = ref("");
 const uploadStep = ref(1);
+const batchUploadTab = ref("file");
 const datasetToDelete = ref<Dataset | null>(null);
 const specialTable = ref<HTMLDivElement | null>(null);
+const batchUploadFile = ref<File[]>([]);
+const batchUploadText = ref("");
+const batchUploadPreview = ref<any[]>([]);
+const batchUploadErrors = ref<string[]>([]);
 
 type HeaderAlign = "center" | "end" | "start" | undefined;
 
@@ -345,6 +458,14 @@ const headers = [
   { title: "", key: "updateCount", sortable: true },
   { title: "", key: "creator", sortable: true },
   { title: "操作", key: "actions", sortable: false, width: 250, align: "center" as const }
+];
+
+// 预览表格列定义
+const previewHeaders = [
+  { title: "数据集名称", key: "name", sortable: false },
+  { title: "数据集描述", key: "description", sortable: false },
+  { title: "数据基础信息", key: "dataInfo", sortable: false },
+  { title: "创建人", key: "creator", sortable: false }
 ];
 
 // 筛选选项
@@ -418,6 +539,13 @@ const newDataset = ref({
   dataInfo: "",
   creator: "",
   file: [] as File[]
+});
+
+// 监听对话框打开，设置默认创建人
+watch(showUploadDialog, (newVal) => {
+  if (newVal) {
+    newDataset.value.creator = currentUser.value;
+  }
 });
 
 // 上传配置
@@ -637,6 +765,105 @@ const confirmDelete = async () => {
   } finally {
     deleting.value = false;
   }
+};
+
+// 批量上传方法
+const handleFileUpload = (event: any) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const content = e.target?.result as string;
+    parseCSVContent(content);
+  };
+  reader.readAsText(file);
+};
+
+const parseCSVText = () => {
+  if (!batchUploadText.value.trim()) {
+    batchUploadPreview.value = [];
+    return;
+  }
+  parseCSVContent(batchUploadText.value);
+};
+
+const parseCSVContent = (content: string) => {
+  const lines = content.trim().split('\n');
+  const data = [];
+  const errors = [];
+
+  // 跳过表头（如果有）
+  const startIndex = lines[0].includes('数据集名称') ? 1 : 0;
+
+  for (let i = startIndex; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+
+    const parts = line.split(',').map(part => part.trim().replace(/^"|"$/g, ''));
+    
+    if (parts.length !== 4) {
+      errors.push(`第 ${i + 1} 行：数据格式不正确，需要4个字段`);
+      continue;
+    }
+
+    const [name, description, dataInfo, creator] = parts;
+    
+    // 验证必填字段
+    if (!name) errors.push(`第 ${i + 1} 行：数据集名称不能为空`);
+    if (!dataInfo) errors.push(`第 ${i + 1} 行：数据基础信息不能为空`);
+    // 创建人可以为空，为空时使用当前用户
+
+    // 检查重名
+    if (datasets.value.some(d => d.name === name)) {
+      errors.push(`第 ${i + 1} 行：数据集名称 "${name}" 已存在`);
+    }
+
+    data.push({
+      name,
+      description: description || '',
+      dataInfo,
+      creator: creator || currentUser.value // 如果创建人为空则使用当前用户
+    });
+  }
+
+  batchUploadPreview.value = data;
+  batchUploadErrors.value = errors;
+};
+
+const confirmBatchUpload = async () => {
+  batchUploading.value = true;
+  try {
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    const now = new Date().toISOString();
+    const newDatasets = batchUploadPreview.value.map((item, index) => ({
+      id: (datasets.value.length + index + 1).toString(),
+      name: item.name,
+      description: item.description,
+      dataInfo: item.dataInfo,
+      recordCount: 0, // 待上传
+      createdAt: now,
+      updateCount: 0,
+      creator: item.creator,
+      trainingStatus: "pending" as const,
+      fileSize: 0
+    }));
+
+    datasets.value.unshift(...newDatasets);
+    resetBatchUpload();
+  } finally {
+    batchUploading.value = false;
+  }
+};
+
+const resetBatchUpload = () => {
+  showBatchUploadDialog.value = false;
+  batchUploadFile.value = [];
+  batchUploadText.value = '';
+  batchUploadPreview.value = [];
+  batchUploadErrors.value = [];
+  batchUploadTab.value = 'file';
 };
 
 onMounted(() => {

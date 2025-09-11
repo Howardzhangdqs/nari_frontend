@@ -240,9 +240,25 @@
         </v-card-title>
         <v-card-text>
           <v-row>
+            <v-col cols="12">
+              <v-card>
+                <v-card-title class="text-subtitle-1">参数预设</v-card-title>
+                <v-card-text>
+                  <v-select v-model="selectedPreset" :items="presetOptions" label="选择参数预设" 
+                    variant="outlined" clearable @update:model-value="applyPreset">
+                    <template v-slot:append>
+                      <v-btn size="small" icon variant="text" @click="openPresetManagement" v-if="isAdmin">
+                        <v-tooltip activator="parent">管理预设</v-tooltip>
+                        <v-icon>mdi-cog</v-icon>
+                      </v-btn>
+                    </template>
+                  </v-select>
+                </v-card-text>
+              </v-card>
+            </v-col>
             <v-col cols="12" md="6">
               <v-card>
-                <v-card-title class="text-subtitle-1">训练集划分</v-card-title>
+                <v-card-title class="text-subtitle-1">数据集划分</v-card-title>
                 <v-card-text>
                   <v-slider v-model="parameters.trainRatio" label="训练集比例" min="0.6" max="0.9" step="0.05"
                     thumb-label="always">
@@ -266,9 +282,9 @@
             </v-col>
             <v-col cols="12" md="6">
               <v-card>
-                <v-card-title class="text-subtitle-1">技术路线选择</v-card-title>
+                <v-card-title class="text-subtitle-1">训练参数配置</v-card-title>
                 <v-card-text>
-                  <v-select v-model="parameters.algorithm" :items="algorithmOptions" label="算法选择"
+                  <v-select v-model="parameters.algorithm" :items="algorithmOptions" label="优化算法"
                     variant="outlined"></v-select>
                   <v-text-field v-model="parameters.epochs" label="训练轮数" type="number" variant="outlined"
                     class="mt-3"></v-text-field>
@@ -307,6 +323,75 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- 参数预设管理弹窗 -->
+    <v-dialog v-model="showPresetManagement" max-width="700px">
+      <v-card>
+        <v-card-title>
+          <v-icon class="mr-2">mdi-tune-variant</v-icon>
+          参数预设管理
+        </v-card-title>
+        <v-card-text>
+          <v-row class="mb-4">
+            <v-col cols="12">
+              <v-btn color="primary" prepend-icon="mdi-plus" @click="addNewPreset">
+                新增预设
+              </v-btn>
+            </v-col>
+          </v-row>
+          <v-data-table :headers="presetHeaders" :items="presetData" :loading="presetLoading">
+            <template v-slot:[`item.actions`]="{ item }">
+              <div class="d-flex gap-1">
+                <v-btn size="small" variant="text" color="primary" icon @click="editPreset(item)">
+                  <v-tooltip activator="parent">编辑</v-tooltip>
+                  <v-icon>mdi-pencil</v-icon>
+                </v-btn>
+                <v-btn size="small" variant="text" color="error" icon @click="deletePreset(item)">
+                  <v-tooltip activator="parent">删除</v-tooltip>
+                  <v-icon>mdi-delete</v-icon>
+                </v-btn>
+              </div>
+            </template>
+          </v-data-table>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn @click="showPresetManagement = false">关闭</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- 新增/编辑预设弹窗 -->
+    <v-dialog v-model="showPresetDialog" max-width="500px">
+      <v-card>
+        <v-card-title>
+          <v-icon class="mr-2">mdi-tune</v-icon>
+          {{ editingPreset ? '编辑预设' : '新增预设' }}
+        </v-card-title>
+        <v-card-text>
+          <v-form ref="presetForm" v-model="presetFormValid">
+            <v-text-field v-model="currentPreset.name" :rules="[rules.required]" variant="outlined">
+              <template v-slot:label>
+                <span class="text-error">*</span> 预设名称
+              </template>
+            </v-text-field>
+            <v-text-field v-model="currentPreset.epochs" label="训练轮数" type="number" variant="outlined"></v-text-field>
+            <v-text-field v-model="currentPreset.batchSize" label="批次大小" type="number" variant="outlined"></v-text-field>
+            <v-text-field v-model="currentPreset.learningRate" label="学习率" type="number" variant="outlined" step="0.0001"></v-text-field>
+            <v-select v-model="currentPreset.algorithm" :items="algorithmOptions" label="优化算法" variant="outlined"></v-select>
+            <v-slider v-model="currentPreset.trainRatio" label="训练集比例" min="0.6" max="0.9" step="0.05" thumb-label="always"></v-slider>
+            <v-slider v-model="currentPreset.valRatio" label="验证集比例" min="0.05" max="0.2" step="0.05" thumb-label="always"></v-slider>
+          </v-form>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn @click="showPresetDialog = false">取消</v-btn>
+          <v-btn color="primary" :disabled="!presetFormValid" @click="savePreset" :loading="savingPreset">
+            保存
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -335,15 +420,23 @@ const loading = ref(false);
 const scrollLeft = ref(100);
 const saving = ref(false);
 const deleting = ref(false);
+const savingPreset = ref(false);
+const presetLoading = ref(false);
 const showTaskDialog = ref(false);
 const showParameterDialog = ref(false);
 const showDeleteDialog = ref(false);
+const showPresetManagement = ref(false);
+const showPresetDialog = ref(false);
 const taskFormValid = ref(false);
+const presetFormValid = ref(false);
 const searchKeyword = ref("");
 const statusFilter = ref("");
 const editingTask = ref<Task | null>(null);
 const taskToDelete = ref<Task | null>(null);
 const specialTable = ref<HTMLDivElement | null>(null);
+const selectedPreset = ref("");
+const editingPreset = ref(false);
+const isAdmin = ref(true); // TODO: 从用户权限系统获取
 
 // 表格列定义
 const headers = [
@@ -356,6 +449,18 @@ const headers = [
   { title: "", key: "createdAt", sortable: true },
   { title: "", key: "updatedAt", sortable: true },
   { title: "操作", key: "actions", sortable: false, width: 280, align: "center" as const }
+];
+
+// 预设管理表格列定义
+const presetHeaders = [
+  { title: "预设名称", key: "name", sortable: true },
+  { title: "训练轮数", key: "epochs", sortable: true },
+  { title: "批次大小", key: "batchSize", sortable: true },
+  { title: "学习率", key: "learningRate", sortable: true },
+  { title: "优化算法", key: "algorithm", sortable: true },
+  { title: "训练集比例", key: "trainRatio", sortable: true },
+  { title: "验证集比例", key: "valRatio", sortable: true },
+  { title: "操作", key: "actions", sortable: false, width: 100 }
 ];
 
 // 筛选选项
@@ -388,6 +493,82 @@ const algorithmOptions = [
   { title: "RMSprop优化器", value: "rmsprop" },
   { title: "AdaGrad优化器", value: "adagrad" }
 ];
+
+// 参数预设数据
+const presetData = ref([
+  {
+    id: "1",
+    name: "XGBoost最佳参数",
+    epochs: 300,
+    batchSize: 32,
+    learningRate: 0.3,
+    algorithm: "adam",
+    trainRatio: 0.8,
+    valRatio: 0.1
+  },
+  {
+    id: "2",
+    name: "Transformer最佳参数",
+    epochs: 100,
+    batchSize: 16,
+    learningRate: 0.0001,
+    algorithm: "adam",
+    trainRatio: 0.85,
+    valRatio: 0.1
+  },
+  {
+    id: "3",
+    name: "LSTM最佳参数",
+    epochs: 150,
+    batchSize: 32,
+    learningRate: 0.001,
+    algorithm: "adam",
+    trainRatio: 0.7,
+    valRatio: 0.15
+  },
+  {
+    id: "4",
+    name: "Random Forest最佳参数",
+    epochs: 200,
+    batchSize: 64,
+    learningRate: 0.01,
+    algorithm: "adam",
+    trainRatio: 0.75,
+    valRatio: 0.15
+  },
+  {
+    id: "5",
+    name: "GRU最佳参数",
+    epochs: 120,
+    batchSize: 32,
+    learningRate: 0.001,
+    algorithm: "rmsprop",
+    trainRatio: 0.7,
+    valRatio: 0.15
+  },
+  {
+    id: "6",
+    name: "快速验证模式",
+    epochs: 30,
+    batchSize: 128,
+    learningRate: 0.01,
+    algorithm: "sgd",
+    trainRatio: 0.6,
+    valRatio: 0.2
+  }
+]);
+
+// 当前预设表单
+const currentPreset = ref({
+  id: "",
+  name: "",
+  epochs: 100,
+  batchSize: 32,
+  learningRate: 0.001,
+  algorithm: "adam",
+  trainRatio: 0.7,
+  valRatio: 0.15
+});
 
 // 任务数据
 const tasks = ref<Task[]>([
@@ -474,6 +655,14 @@ const filteredTasks = computed(() => {
   }
 
   return filtered;
+});
+
+// 预设选项
+const presetOptions = computed(() => {
+  return presetData.value.map(preset => ({
+    title: preset.name,
+    value: preset.id
+  }));
 });
 
 // 方法
@@ -651,6 +840,89 @@ const confirmDelete = async () => {
   } finally {
     deleting.value = false;
   }
+};
+
+// 预设管理方法
+const applyPreset = (presetId: string | null) => {
+  if (!presetId) return;
+  
+  const preset = presetData.value.find(p => p.id === presetId);
+  if (preset) {
+    parameters.value = {
+      ...parameters.value,
+      epochs: preset.epochs,
+      batchSize: preset.batchSize,
+      learningRate: preset.learningRate,
+      algorithm: preset.algorithm,
+      trainRatio: preset.trainRatio,
+      valRatio: preset.valRatio
+    };
+  }
+};
+
+const openPresetManagement = () => {
+  showParameterDialog.value = false;
+  showPresetManagement.value = true;
+};
+
+const addNewPreset = () => {
+  resetPresetForm();
+  editingPreset.value = false;
+  showPresetDialog.value = true;
+};
+
+const editPreset = (preset: any) => {
+  editingPreset.value = true;
+  currentPreset.value = { ...preset };
+  showPresetDialog.value = true;
+};
+
+const savePreset = async () => {
+  savingPreset.value = true;
+  try {
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    if (editingPreset.value) {
+      // 更新现有预设
+      const index = presetData.value.findIndex(p => p.id === currentPreset.value.id);
+      if (index !== -1) {
+        presetData.value[index] = { ...currentPreset.value };
+      }
+    } else {
+      // 新增预设
+      const newId = (presetData.value.length + 1).toString();
+      presetData.value.push({
+        ...currentPreset.value,
+        id: newId
+      });
+    }
+    
+    showPresetDialog.value = false;
+    resetPresetForm();
+  } finally {
+    savingPreset.value = false;
+  }
+};
+
+const deletePreset = async (preset: any) => {
+  const index = presetData.value.findIndex(p => p.id === preset.id);
+  if (index !== -1) {
+    presetData.value.splice(index, 1);
+  }
+};
+
+const resetPresetForm = () => {
+  currentPreset.value = {
+    id: "",
+    name: "",
+    epochs: 100,
+    batchSize: 32,
+    learningRate: 0.001,
+    algorithm: "adam",
+    trainRatio: 0.7,
+    valRatio: 0.15
+  };
+  editingPreset.value = false;
 };
 
 onMounted(() => {
